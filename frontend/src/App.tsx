@@ -1,35 +1,47 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Box } from '@mui/material';
+import Header from './components/layout/Header';
+import Footer from './components/layout/Footer';
+
+// 1. Import Routes và Route
+import { Routes, Route } from 'react-router-dom';
+
+// 2. Import các trang
+import HomePage from './pages/HomePage';
+import ProfilePage from './pages/ProfilePage';
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <Box 
+      sx={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        minHeight: '100vh',
+        bgcolor: 'background.default'
+      }}
+    >
+      {/* Header và Footer sẽ hiển thị trên mọi trang */}
+      <Header />
+
+      {/* 3. Phần nội dung chính (thay đổi theo URL) */}
+      <main style={{ flexGrow: 1 }}>
+        <Routes>
+          {/* Route cho Trang chủ */}
+          <Route path="/" element={<HomePage />} />
+          
+          {/* Route cho Trang cá nhân (ví dụ: /profile/lehuynhphat) */}
+          <Route path="/profile/:userId" element={<ProfilePage />} />
+          
+          {/* Route dự phòng (ví dụ: /profile trỏ về trang của mình) */}
+          {/* Tạm thời chúng ta cũng cho nó trỏ về ProfilePage */}
+          <Route path="/profile" element={<ProfilePage />} />
+          
+          {/* TODO: Thêm các route khác (Login, Register...) */}
+        </Routes>
+      </main>
+      
+      <Footer />
+    </Box>
+  );
 }
 
-export default App
+export default App;

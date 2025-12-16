@@ -1,11 +1,8 @@
 package com.example.backend.Post;
 
 import java.util.List;
-
 import org.springframework.web.multipart.MultipartFile;
-
 import com.example.backend.Enum.Visibility;
-
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 

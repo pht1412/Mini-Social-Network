@@ -69,16 +69,18 @@ public class PostService {
         post.setContent(request.getContent());
         post.setVisibility(request.getVisibility());
 
-        var currentMediaList = post.getMedia();
-        currentMediaList.clear();
+        var currentMedia = post.getMedia();
+        
+
         if (request.getMediaFiles() != null && !request.getMediaFiles().isEmpty()) {
+            currentMedia.clear();
             for (MultipartFile file : request.getMediaFiles()) {
                 String fileUrl = storeFileToLocal(file);
-                PostMedia media = new PostMedia();
-                media.setPost(post);
-                media.setMediaUrl(fileUrl);
-                media.setMediaType(detectMediaType(file));
-                currentMediaList.add(media);
+                PostMedia newMedia = new PostMedia();
+                newMedia.setPost(post);
+                newMedia.setMediaUrl(fileUrl);
+                newMedia.setMediaType(detectMediaType(file));
+                currentMedia.add(newMedia);
             }
         }
 
