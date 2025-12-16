@@ -1,102 +1,68 @@
 package com.example.backend.admin;
 
+import java.util.Arrays;
+import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.Optional;
-import com.example.backend.Enum.Visibility;
-
-import com.example.backend.Post.Post;
+import com.example.backend.Post.PostService;
+import com.example.backend.Post.PostResponse;
 import com.example.backend.Post.PostRepository;
-import com.example.backend.Post.PostDto;
+import com.example.backend.User.User;           // Import đúng folder User
+import com.example.backend.User.UserRepository; // Import đúng folder User
+import com.example.backend.User.UserResponse;   // Import đúng folder User
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
+
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin")
 public class AdminController {
+
+    @Autowired
+    private PostService postService;
+    
     @Autowired
     private PostRepository postRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    // --- CÁC API VỀ BÀI VIẾT (POST) ---
+
+    @GetMapping("/dashboard") // Đệ thêm mapping cho hàm này để không bị lỗi 404
     public ResponseEntity<String> getAdminDashboard() {
         return ResponseEntity.ok("Admin Dashboard");
     }
 
-    // ⭐️ 1. API DUYỆT BÀI VIẾT (Chuyển sang PUBLIC)
     @PostMapping("/approve-post/{post_id}")
     public ResponseEntity<String> approvePost(@PathVariable Long post_id) {
         try {
-            Optional<Post> postOptional = postRepository.findById(post_id);
-            if (postOptional.isPresent()) {
-                Post post = postOptional.get();
-                post.setVisibility(Visibility.PUBLIC); // Chuyển trạng thái
-                postRepository.save(post); // Lưu xuống DB
-                return ResponseEntity.ok("Duyệt bài thành công!");
-            }
-            return ResponseEntity.badRequest().body("Không tìm thấy bài viết");
+            postService.approvePost(post_id);
+            return ResponseEntity.ok("Duyệt bài thành công!");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
         }
     }
 
-    // ⭐️ 2. API LẤY DANH SÁCH BÀI VIẾT
     @GetMapping("/posts")
     public ResponseEntity<?> getAllPosts() {
         try {
-            // Lấy tất cả bài viết, sắp xếp giảm dần theo ID (mới nhất lên đầu)
-            List<Post> posts = postRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
-
-            // Map entities to DTOs to avoid Jackson/Hibernate serialization issues
-            List<PostDto> dtos = posts.stream().map(p -> new PostDto(
-                p.getId(),
-                p.getAuthor() != null ? p.getAuthor().getId() : null,
-                p.getAuthor() != null ? p.getAuthor().getUsername() : null,
-                p.getContent(),
-                p.getVisibility(),
-                p.getLikeCount(),
-                p.getCommentCount(),
-                p.getShareCount()
-            )).collect(Collectors.toList());
-
-            return ResponseEntity.ok(dtos);
+            List<PostResponse> posts = postService.getAllPostsForAdmin();
+            return ResponseEntity.ok(posts);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Lỗi tải bài viết: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Failed to retrieve posts: " + e.getMessage());
         }
     }
 
-    // ⭐️ 3. API XÓA BÀI VIẾT
     @DeleteMapping("/delete-post/{post_id}")
     public ResponseEntity<String> deletePost(@PathVariable Long post_id, @RequestParam String reason) {
         try {
-            if (postRepository.existsById(post_id)) {
-                postRepository.deleteById(post_id);
-                // (Optional) Có thể lưu 'reason' vào bảng Log nếu cần
-                return ResponseEntity.ok("Đã xóa bài viết.");
-            }
-            return ResponseEntity.badRequest().body("Bài viết không tồn tại");
+            postService.deletePost(post_id);
+            return ResponseEntity.ok("Xóa bài thành công.");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Lỗi xóa bài: " + e.getMessage());
-        }
-    }
-
-    @PostMapping("/ban-user/{user_id}")
-    public ResponseEntity<String> banUser(@PathVariable Long user_id) {
-        try {
-            // Logic to ban user here
-            return ResponseEntity.ok("thành công");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("thất bại");
-        }
-    }
-
-    @PostMapping("/approve-user/{user_id}")
-    public ResponseEntity<String> approveUser(@PathVariable Long user_id) {
-        try {
-            // Logic to approve user here
-            return ResponseEntity.ok("thành công");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("thất bại");
         }
     }
 
@@ -109,5 +75,79 @@ public class AdminController {
             return ResponseEntity.badRequest().body(0L);
         }
     }
-    
+
+    // --- CÁC API VỀ NGƯỜI DÙNG (USER) ---
+
+    // 1. Lấy danh sách toàn bộ User (Đã tối ưu dùng Builder)
+    @GetMapping("/users")
+    public ResponseEntity<?> getAllUsers() {
+        try {
+            List<String> targetRoles = Arrays.asList("STUDENT", "TEACHER");
+            List<User> users = userRepository.findByRoleIn(targetRoles);        
+
+            // ⭐️ SỬA ĐỔI: Dùng Builder thay vì set thủ công để đồng bộ với UserResponse mới
+            List<UserResponse> userResponses = users.stream().map(u -> UserResponse.builder()
+                .id(u.getId())
+                .studentCode(u.getStudentCode())
+                .email(u.getEmail())
+                .fullName(u.getFullName())
+                .className(u.getClassName())
+                .role(u.getRole())
+                .avatarUrl(u.getAvatarUrl())
+                .bio(u.getBio())
+                .active(u.getActive())
+                .createdAt(u.getCreatedAt())
+                .lastLogin(u.getLastLogin())
+                .build()
+            ).collect(Collectors.toList());
+
+            return ResponseEntity.ok(userResponses);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Lỗi tải danh sách người dùng: " + e.getMessage());
+        }
+    }
+
+    // 2. Ban User (Khóa tài khoản)
+    @PostMapping("/ban-user/{user_id}")
+    public ResponseEntity<String> banUser(@PathVariable Integer user_id) {
+        try {
+            User user = userRepository.findById(user_id)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng!"));
+            
+            user.setActive(false);
+            userRepository.save(user);
+            
+            return ResponseEntity.ok("Đã khóa tài khoản sinh viên: " + user.getFullName());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
+        }
+    }
+
+    // 3. Approve User (Mở khóa tài khoản)
+    @PostMapping("/approve-user/{user_id}")
+    public ResponseEntity<String> approveUser(@PathVariable Integer user_id) {
+        try {
+            User user = userRepository.findById(user_id)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng!"));
+
+            user.setActive(true);
+            userRepository.save(user);
+            
+            return ResponseEntity.ok("Đã duyệt/mở khóa tài khoản: " + user.getFullName());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
+        }
+    }
+    @GetMapping("/users-stats")
+    public ResponseEntity<Map<String, Long>> getUserStats() {
+        long activeCount = userRepository.countByActive(true);
+        long pendingCount = userRepository.countByActive(false);
+
+        Map<String, Long> stats = new HashMap<>();
+        stats.put("activeUsers", activeCount);
+        stats.put("pendingUsers", pendingCount);
+
+        return ResponseEntity.ok(stats);
+    }
+
 }

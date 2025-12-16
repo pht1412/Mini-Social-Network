@@ -18,10 +18,14 @@ public class FeedService {
     private final PostRepository postRepository;
 
     @Transactional(readOnly = true)
-    public Page<PostResponse> getNewsFeed(Long currentUserId, Pageable pageable) {
+    // ⭐️ SỬA: Đổi tham số từ Long -> Integer để khớp với User Entity
+    public Page<PostResponse> getNewsFeed(Integer currentUserId, Pageable pageable) {
         Page<Post> postPage = postRepository.findAllForNewsFeed(pageable);
         List<Long> postIds = postPage.getContent().stream().map(Post::getId).toList();
-        Set<Long> likedPostIds = postRepository.findPostIdsLikedByUser(currentUserId, postIds);
+        
+        // Lưu ý: Nếu method findPostIdsLikedByUser bên Repo vẫn nhận Long, huynh cần ép kiểu (long) currentUserId
+        // Nhưng tốt nhất nên sửa Repo nhận Integer. Tạm thời đệ ép kiểu Long ở đây để tránh lỗi biên dịch Repo.
+        Set<Long> likedPostIds = postRepository.findPostIdsLikedByUser(Long.valueOf(currentUserId), postIds);
         
         return postPage.map(post -> mapToPostResponse(post, likedPostIds));
     }
@@ -29,9 +33,10 @@ public class FeedService {
     private PostResponse mapToPostResponse(Post post, Set<Long> likedPostIds) {
         User author = post.getAuthor();
 
+        // ⭐️ SỬA: Dùng builder đúng, thay username bằng studentCode
         UserResponse authorDto = UserResponse.builder()
                 .id(author.getId())
-                .username(author.getUsername())
+                .studentCode(author.getStudentCode()) // Sửa getUsername() -> getStudentCode()
                 .fullName(author.getFullName())
                 .avatarUrl(author.getAvatarUrl())
                 .build();
@@ -44,17 +49,17 @@ public class FeedService {
                         .build())
                 .collect(Collectors.toList());
 
-        return new PostResponse(
-                post.getId(),
-                post.getContent(),
-                post.getVisibility(),
-                post.getCreatedAt(),
-                post.getUpdatedAt(),
-                authorDto,
-                mediaDtos,
-                post.getLikeCount(),
-                post.getCommentCount(),
-                likedPostIds.contains(post.getId())
-        );
+        return PostResponse.builder() // ⭐️ Nên dùng Builder cho PostResponse luôn cho đồng bộ
+                .id(post.getId())
+                .content(post.getContent())
+                .visibility(post.getVisibility())
+                .createdAt(post.getCreatedAt())
+                .updatedAt(post.getUpdatedAt())
+                .author(authorDto)
+                .media(mediaDtos)
+                .likeCount(post.getLikeCount())
+                .commentCount(post.getCommentCount())
+                .isLikedByCurrentUser(likedPostIds.contains(post.getId()))
+                .build();
     }
 }

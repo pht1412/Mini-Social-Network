@@ -1,8 +1,11 @@
 import React from 'react';
-import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Toolbar, AppBar, Typography, CssBaseline, Divider } from '@mui/material';
-import { Link, useLocation } from 'react-router-dom';
+import {
+  Box, Drawer, List, ListItem, ListItemButton, ListItemIcon,
+  ListItemText, Toolbar, AppBar, Typography, CssBaseline, Divider
+} from '@mui/material';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
-// Icons
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
 import ArticleIcon from '@mui/icons-material/Article';
@@ -16,6 +19,13 @@ interface AdminLayoutProps {
 
 export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
 
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/admin/dashboard' },
@@ -26,60 +36,54 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
-      
-      {/* Header Admin */}
+
       <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
         <Toolbar>
-          <Typography variant="h6" noWrap component="div">
-            Admin Portal - Mini Social Network
-          </Typography>
+          <Typography variant="h6">Admin Portal - Mini Social Network</Typography>
         </Toolbar>
       </AppBar>
 
-      {/* Sidebar */}
       <Drawer
         variant="permanent"
         sx={{
           width: drawerWidth,
-          flexShrink: 0,
-          [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box' },
+          [`& .MuiDrawer-paper`]: { width: drawerWidth },
         }}
       >
-        <Toolbar /> {/* Spacer để đẩy nội dung xuống dưới Header */}
+        <Toolbar />
         <Box sx={{ overflow: 'auto' }}>
           <List>
             {menuItems.map((item) => (
               <ListItem key={item.text} disablePadding>
-                <ListItemButton 
-                  component={Link} 
+                <ListItemButton
+                  component={Link}
                   to={item.path}
-                  selected={location.pathname === item.path} // Highlight mục đang chọn
+                  selected={location.pathname === item.path}
                 >
-                  <ListItemIcon sx={{ color: location.pathname === item.path ? 'primary.main' : 'inherit' }}>
-                    {item.icon}
-                  </ListItemIcon>
+                  <ListItemIcon>{item.icon}</ListItemIcon>
                   <ListItemText primary={item.text} />
                 </ListItemButton>
               </ListItem>
             ))}
           </List>
+
           <Divider />
+
           <List>
-             <ListItem disablePadding>
-                <ListItemButton>
-                  <ListItemIcon>
-                    <LogoutIcon color="error"/>
-                  </ListItemIcon>
-                  <ListItemText primary="Đăng xuất" sx={{ color: 'error.main'}} />
-                </ListItemButton>
-             </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton onClick={handleLogout}>
+                <ListItemIcon>
+                  <LogoutIcon color="error" />
+                </ListItemIcon>
+                <ListItemText primary="Đăng xuất" sx={{ color: 'error.main' }} />
+              </ListItemButton>
+            </ListItem>
           </List>
         </Box>
       </Drawer>
 
-      {/* Nội dung chính */}
-      <Box component="main" sx={{ flexGrow: 1, p: 3, bgcolor: '#f5f5f5', minHeight: '100vh' }}>
-        <Toolbar /> {/* Spacer */}
+      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+        <Toolbar />
         {children}
       </Box>
     </Box>

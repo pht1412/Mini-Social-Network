@@ -20,4 +20,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     
     @Query("SELECT COUNT(p) FROM Post p")
     long countPosts();
+
+    @Query("SELECT DISTINCT p FROM Post p JOIN FETCH p.author LEFT JOIN FETCH p.media ORDER BY p.id DESC")
+    List<Post> findAllWithAuthorAndMedia();
 }

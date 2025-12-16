@@ -1,21 +1,22 @@
-// src/components/layout/Header.tsx
 import React from 'react';
 import { 
   AppBar, Toolbar, Box, InputBase, 
   IconButton, Tooltip, Button, Avatar 
 } from '@mui/material';
 import { styled, alpha } from '@mui/material/styles';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
-
-// Import Icons
 import SearchIcon from '@mui/icons-material/Search';
 import HomeIcon from '@mui/icons-material/Home';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'; 
+import LogoutIcon from '@mui/icons-material/Logout';
 
-// ----------------- STYLED COMPONENTS (Giữ nguyên) -----------------
+import { useAuth } from '../../context/AuthContext';
+
+// Style cho ô tìm kiếm
 const Search = styled('div')(({ theme }) => ({
   position: 'relative',
-  borderRadius: '20px', // Làm cho nó tròn như Facebook
+  borderRadius: '20px', 
   backgroundColor: alpha(theme.palette.common.white, 0.15),
   '&:hover': {
     backgroundColor: alpha(theme.palette.common.white, 0.25),
@@ -42,7 +43,6 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   color: 'inherit',
   '& .MuiInputBase-input': {
     padding: theme.spacing(1, 1, 1, 0),
-    // vertical padding + font size from searchIcon
     paddingLeft: `calc(1em + ${theme.spacing(4)})`,
     transition: theme.transitions.create('width'),
     width: '100%',
@@ -51,29 +51,38 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
     },
   },
 }));
-// ----------------- END STYLED COMPONENTS -----------------
-
 
 export default function Header() {
-  const isLoggedIn = false;
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
-    <AppBar position="sticky">
-      {/* ⭐️ THAY ĐỔI: Thêm sx vào Toolbar để tạo bố cục 3 cột */}
+    // ⭐️ SỬA ĐỔI QUAN TRỌNG:
+    // Thay màu mặc định bằng Gradient Indigo-Violet để khớp với Login/Register
+    <AppBar position="sticky" sx={{ 
+      background: 'linear-gradient(90deg, #4F46E5 0%, #7C3AED 100%)', 
+      boxShadow: '0 4px 20px 0px rgba(0, 0, 0, 0.1)' 
+    }}>
       <Toolbar sx={{ justifyContent: 'space-between' }}>
         
-        {/* ----- ⭐️ CỤM BÊN TRÁI ----- */}
+        {/* ----- CỤM BÊN TRÁI ----- */}
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          {/* 1. Logo */}
-          <Box
-            component="img"
-            src="/logo.png" // File này phải ở trong thư mục /public
-            alt="Logo"
-            sx={{ height: 40, cursor: 'pointer', mr: 2 }}
-            onClick={() => (window.location.href = '/')} 
-          />
+          {/* Nếu huynh có logo ảnh thì dùng, không thì dùng Text Logo cho đẹp */}
+          <Box 
+            onClick={() => navigate('/')} 
+            sx={{ 
+                cursor: 'pointer', mr: 2, fontWeight: 'bold', fontSize: '1.2rem', 
+                display: 'flex', alignItems: 'center', gap: 1 
+            }}
+          >
+            MiniSocial
+          </Box>
 
-          {/* 2. Khung Tìm kiếm */}
           <Search>
             <SearchIconWrapper>
               <SearchIcon />
@@ -85,51 +94,83 @@ export default function Header() {
           </Search>
         </Box>
 
-
-        {/* ----- ⭐️ CỤM Ở GIỮA (Nút Home) ----- */}
-        {/* THAY ĐỔI: Bọc nút Home trong Box căn giữa & flexGrow */}
-        <Box sx={{
-          flexGrow: 1,
-          display: 'flex',
-          justifyContent: 'center',
-        }}>
-          {/* 3. Nút Home (Giữ nguyên style gốc của bạn) */}
+        {/* ----- CỤM Ở GIỮA ----- */}
+        <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center' }}>
           <Tooltip title="Trang chủ">
-            <Box 
+            <IconButton 
                 component={RouterLink}
                 to="/"
+                color="inherit"
                 sx={{ 
-                    bgcolor: 'rgba(0,0,0,0.2)', // Nền nhẹ
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
+                    bgcolor: 'rgba(255,255,255,0.1)', 
+                    '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' }
             }}>
-              <IconButton color="inherit">
-                <HomeIcon sx={{ color: 'white' }} />
-              </IconButton>
-            </Box>
+                <HomeIcon />
+            </IconButton>
           </Tooltip>
         </Box>
         
 
-        {/* ----- ⭐️ CỤM BÊN PHẢI ----- */}
-        {/* THAY ĐỔI: Bọc cụm bên phải trong 1 Box */}
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          {isLoggedIn ? (
-            // Nếu đã đăng nhập (xây dựng sau)
-            <Tooltip title="Trang cá nhân">
-              <IconButton sx={{ p: 0 }}>
-                <Avatar alt="Tên Người Dùng" src="/static/images/avatar/1.jpg" />
-              </IconButton>
-            </Tooltip>
-          ) : (
-            // Nếu chưa đăng nhập
+        {/* ----- CỤM BÊN PHẢI ----- */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          {isAuthenticated ? (
             <>
-              <Button color="inherit" variant="outlined" sx={{ mr: 1 }}>
+              {/* Nút Admin */}
+              {user?.role === 'ADMIN' && (
+                <Tooltip title="Trang quản trị (Dashboard)">
+                  <IconButton 
+                    component={RouterLink} 
+                    to="/admin/dashboard" 
+                    color="inherit"
+                    sx={{ 
+                      // Dùng màu cam hoặc hồng làm điểm nhấn trên nền tím
+                      bgcolor: 'rgba(236, 72, 153, 0.2)', // Pink transparent
+                      border: '1px solid rgba(236, 72, 153, 0.5)',
+                      '&:hover': { bgcolor: 'rgba(236, 72, 153, 0.4)' },
+                      mr: 1
+                    }}
+                  >
+                    <AdminPanelSettingsIcon sx={{ color: '#FBCFE8' }} /> {/* Pink Light */}
+                  </IconButton>
+                </Tooltip>
+              )}
+
+              {/* Avatar */}
+              <Tooltip title={`Xin chào, ${user?.fullName || 'User'}`}>
+                <IconButton component={RouterLink} to="/profile" sx={{ p: 0, border: '2px solid rgba(255,255,255,0.5)' }}>
+                  <Avatar alt={user?.fullName} src={user?.avatarUrl || "/static/images/avatar/1.jpg"} />
+                </IconButton>
+              </Tooltip>
+
+              <Tooltip title="Đăng xuất">
+                <IconButton onClick={handleLogout} color="inherit">
+                    <LogoutIcon />
+                </IconButton>
+              </Tooltip>
+            </>
+          ) : (
+            <>
+              {/* Nút Đăng nhập/Đăng ký style mới */}
+              <Button 
+                color="inherit" 
+                variant="text" 
+                component={RouterLink} 
+                to="/login"
+                sx={{ mr: 1, fontWeight: 600 }}
+              >
                 Đăng nhập
               </Button>
-              <Button color="inherit" variant="contained" sx={{ bgcolor: 'secondary.main' }}>
+              <Button 
+                variant="contained" 
+                component={RouterLink} 
+                to="/register"
+                sx={{ 
+                    bgcolor: 'white', 
+                    color: '#4F46E5', // Chữ màu Indigo
+                    fontWeight: 'bold',
+                    '&:hover': { bgcolor: '#F3F4F6' }
+                }}
+              >
                 Đăng ký
               </Button>
             </>

@@ -1,42 +1,49 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { 
   Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, 
-  Button, Chip, IconButton, Dialog, DialogTitle, DialogContent, TextField, DialogActions, Avatar, Tooltip
+  Button, Chip, IconButton, Dialog, DialogTitle, DialogContent, TextField, DialogActions, Avatar, Tooltip, CircularProgress
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
+import BrokenImageIcon from '@mui/icons-material/BrokenImage';
 
-// ⭐️ CẬP NHẬT INTERFACE KHỚP VỚI ENTITY 'POST' CỦA BACKEND
+import api from '../../api/api';
+
 interface PostMedia {
   id: number;
-  url: string; // backend trả về `url`
-  type: 'IMAGE' | 'VIDEO';
+  url: string;
+  type: string;
+}
+
+interface PostAuthor {
+  id: number;
+  fullName: string;
+  avatarUrl?: string;
+  studentCode?: string;
 }
 
 interface Post {
   id: number;
   content: string;
-  visibility: 'PUBLIC' | 'FRIENDS' | 'PRIVATE' | 'PENDING'; // Khớp với Enum Visibility
-  author: { // Backend trả về 'author', không phải 'user'
-    id: number;
-    username?: string;
-    fullName?: string;
-    avatarUrl?: string; // Backend sử dụng `avatarUrl`
-  };
-  media: PostMedia[]; // Backend trả về list media
+  visibility: 'PUBLIC' | 'FRIENDS' | 'PRIVATE' | 'PENDING';
+  author: PostAuthor;
+  media: PostMedia[];
   createdAt: string;
+  likeCount: number;
+  commentCount: number;
 }
 
 export const PostManager: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
   const [deleteReason, setDeleteReason] = useState('');
-  // Image preview state
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const MEDIA_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
   useEffect(() => {
     fetchPosts();
@@ -44,21 +51,20 @@ export const PostManager: React.FC = () => {
 
   const fetchPosts = async () => {
     try {
-      // ⭐️ Gọi đúng API Backend (http://localhost:8080)
-      const response = await axios.get('http://localhost:8080/api/admin/posts');
-      if (Array.isArray(response.data)) {
-         setPosts(response.data);
-      }
+      setLoading(true);
+      const response = await api.get('/api/admin/posts');
+      setPosts(response.data);
     } catch (error) {
       console.error("Lỗi tải bài viết:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleApprove = async (postId: number) => {
     try {
-      await axios.post(`http://localhost:8080/api/admin/approve-post/${postId}`);
-      alert("Đã duyệt bài viết thành công!");
-      fetchPosts(); // Load lại danh sách
+      await api.post(`/api/admin/approve-post/${postId}`);
+      fetchPosts(); 
     } catch (error) {
       alert("Lỗi khi duyệt bài.");
     }
@@ -73,48 +79,62 @@ export const PostManager: React.FC = () => {
   const handleDeleteConfirm = async () => {
     if (!selectedPostId) return;
     try {
-      await axios.delete(`http://localhost:8080/api/admin/delete-post/${selectedPostId}`, {
+      await api.delete(`/api/admin/delete-post/${selectedPostId}`, {
         params: { reason: deleteReason }
       });
       setOpenDeleteDialog(false);
-      alert("Đã xóa bài viết.");
       fetchPosts();
     } catch (error) {
       alert("Lỗi khi xóa bài.");
     }
   };
 
-  // Helper để lấy tên đầy đủ
-  const getAuthorName = (post: Post) => {
-    if (!post.author) return "Unknown";
-    // Backend provides either fullName or username
-    return post.author.fullName || post.author.username || "Người dùng";
-  };
-
-  // Helper để lấy ảnh đầu tiên
-  // Normalize URLs coming from backend. If URL is relative (starts with '/'),
-  // prefix with backend host so browser loads the image from the backend server.
-  const normalizeUrl = (url?: string | null) => {
-    if (!url) return null;
-    if (url.startsWith('http')) return url;
-    return `http://localhost:8080${url}`;
-  };
-
-  // Helper để lấy ảnh đầu tiên (normalized)
-  const getFirstImage = (post: Post) => {
-    if (post.media && post.media.length > 0) {
-      return normalizeUrl(post.media[0].url);
+  // ⭐️ CHIÊU 2: THIÊN LÝ NHÃN (Hiển thị toàn bộ Media)
+  const renderMediaPreview = (post: Post) => {
+    if (!post.media || post.media.length === 0) {
+      return <Typography variant="caption" color="text.secondary">Không có</Typography>;
     }
-    return null;
+
+    return (
+      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', maxWidth: 300 }}>
+        {post.media.map((item) => {
+          let url = item.url;
+          if (!url) return null;
+          
+          if (url.startsWith('/')) {
+            url = `${MEDIA_BASE_URL}${url}`;
+          }
+
+          const handlePreviewClick = () => {
+             window.open(url, '_blank');
+          };
+
+          if (item.type === 'VIDEO') {
+             return (
+               <Tooltip key={item.id} title="Xem video">
+                 <Box onClick={handlePreviewClick} sx={{ width: 40, height: 40, borderRadius: 1, bgcolor: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: '1px solid #ccc' }}>
+                    <PlayCircleOutlineIcon sx={{ color: 'white', fontSize: 20 }} />
+                 </Box>
+               </Tooltip>
+             );
+          } else {
+             return (
+               <Tooltip key={item.id} title="Xem ảnh">
+                  <Avatar 
+                    variant="rounded" 
+                    src={url} 
+                    onClick={handlePreviewClick} 
+                    sx={{ width: 40, height: 40, border: '1px solid #eee', cursor: 'pointer' }} 
+                  />
+               </Tooltip>
+             );
+          }
+        })}
+      </Box>
+    );
   };
 
-  // Open preview dialog for given URL (already normalized or relative)
-  const openPreview = (url: string | null) => {
-    const normalized = normalizeUrl(url);
-    if (!normalized) return;
-    setPreviewUrl(normalized);
-    setPreviewOpen(true);
-  };
+  if (loading) return <Box sx={{ p: 3, textAlign: 'center' }}><CircularProgress /></Box>;
 
   return (
     <Box>
@@ -125,9 +145,9 @@ export const PostManager: React.FC = () => {
           <TableHead sx={{ bgcolor: '#f5f5f5' }}>
             <TableRow>
               <TableCell>ID</TableCell>
-              <TableCell>Người đăng</TableCell>
+              <TableCell>Tác giả</TableCell>
               <TableCell>Nội dung</TableCell>
-              <TableCell>Hình ảnh</TableCell>
+              <TableCell>Media</TableCell>
               <TableCell>Trạng thái</TableCell>
               <TableCell align="right">Hành động</TableCell>
             </TableRow>
@@ -138,42 +158,33 @@ export const PostManager: React.FC = () => {
                 <TableCell>{post.id}</TableCell>
                 <TableCell>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    {/* Giả định author có trường avatar, nếu không dùng placeholder */}
-                    <Avatar
-                      src={post.author?.avatarUrl}
-                      alt={getAuthorName(post)}
-                      sx={{ width: 30, height: 30, cursor: 'pointer' }}
-                      onClick={() => openPreview(normalizeUrl(post.author?.avatarUrl))}
-                    />
-                    <Typography variant="body2">{getAuthorName(post)}</Typography>
+                    <Avatar src={post.author.avatarUrl} sx={{ width: 30, height: 30 }} />
+                    <Box>
+                        <Typography variant="body2" fontWeight="bold">{post.author.fullName}</Typography>
+                        <Typography variant="caption">{post.author.studentCode}</Typography>
+                    </Box>
                   </Box>
                 </TableCell>
-                <TableCell sx={{ maxWidth: 300 }}>
-                   <Typography noWrap variant="body2">{post.content}</Typography>
+                <TableCell sx={{ maxWidth: 250 }}>
+                   <Tooltip title={post.content}>
+                     <Typography noWrap variant="body2" sx={{overflow: 'hidden', textOverflow: 'ellipsis'}}>{post.content}</Typography>
+                   </Tooltip>
                 </TableCell>
+                {/* Hiển thị list ảnh */}
+                <TableCell>{renderMediaPreview(post)}</TableCell>
                 <TableCell>
-                  {getFirstImage(post) ? (
-                    <Avatar
-                      variant="rounded"
-                      src={getFirstImage(post)!}
-                      sx={{ width: 50, height: 50, cursor: 'pointer' }}
-                      onClick={() => openPreview(getFirstImage(post))}
-                    />
-                  ) : "Không có"}
-                </TableCell>
-                <TableCell>
-                  {/* Hiển thị Chip màu dựa trên visibility */}
                   <Chip 
                     label={post.visibility} 
                     color={post.visibility === 'PUBLIC' ? 'success' : post.visibility === 'PENDING' ? 'warning' : 'default'} 
                     size="small" 
+                    sx={{ fontWeight: 'bold' }}
                   />
                 </TableCell>
                 <TableCell align="right">
                   <Tooltip title="Xem chi tiết">
                     <IconButton size="small" color="info"><VisibilityIcon /></IconButton>
                   </Tooltip>
-                  {/* Nút duyệt chỉ hiện khi bài viết đang là PENDING */}
+                  
                   {post.visibility === 'PENDING' && (
                     <Tooltip title="Duyệt bài">
                       <IconButton size="small" color="success" onClick={() => handleApprove(post.id)}>
@@ -181,6 +192,7 @@ export const PostManager: React.FC = () => {
                       </IconButton>
                     </Tooltip>
                   )}
+
                   <Tooltip title="Xóa bài">
                     <IconButton size="small" color="error" onClick={() => handleOpenDelete(post.id)}>
                         <DeleteIcon />
@@ -190,45 +202,28 @@ export const PostManager: React.FC = () => {
               </TableRow>
             )) : (
               <TableRow>
-                <TableCell colSpan={6} align="center">Chưa có bài viết nào.</TableCell>
+                <TableCell colSpan={6} align="center" sx={{ py: 3 }}>Chưa có bài viết nào.</TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </TableContainer>
 
-      {/* Dialog Xóa giữ nguyên */}
       <Dialog open={openDeleteDialog} onClose={() => setOpenDeleteDialog(false)}>
         <DialogTitle>Xác nhận xóa bài viết</DialogTitle>
         <DialogContent>
           <Typography variant="body2" sx={{ mb: 2 }}>
-            Hành động này không thể hoàn tác. Vui lòng nhập lý do xóa.
+            Hành động này không thể hoàn tác.
           </Typography>
           <TextField
-            autoFocus
-            margin="dense"
-            label="Lý do xóa"
-            fullWidth
-            variant="outlined"
-            value={deleteReason}
-            onChange={(e) => setDeleteReason(e.target.value)}
+            autoFocus margin="dense" label="Lý do xóa" fullWidth variant="outlined"
+            value={deleteReason} onChange={(e) => setDeleteReason(e.target.value)}
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDeleteDialog(false)}>Hủy</Button>
           <Button onClick={handleDeleteConfirm} color="error" variant="contained">Xóa ngay</Button>
         </DialogActions>
-      </Dialog>
-      {/* Image preview dialog */}
-      <Dialog open={previewOpen} onClose={() => setPreviewOpen(false)} maxWidth="lg">
-        <DialogContent sx={{ p: 2, display: 'flex', justifyContent: 'center' }}>
-          {previewUrl ? (
-            // use img to preserve aspect ratio and allow large preview
-            <Box component="img" src={previewUrl} alt="Preview" sx={{ maxWidth: '90vw', maxHeight: '80vh', borderRadius: 1 }} />
-          ) : (
-            <Typography>Không có ảnh để xem.</Typography>
-          )}
-        </DialogContent>
       </Dialog>
     </Box>
   );

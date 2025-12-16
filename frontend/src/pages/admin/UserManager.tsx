@@ -1,45 +1,52 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { 
   Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, 
-  Button, IconButton, Avatar, Chip, Tooltip
+  IconButton, Avatar, Chip, Tooltip, CircularProgress
 } from '@mui/material';
 import BlockIcon from '@mui/icons-material/Block';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import SchoolIcon from '@mui/icons-material/School';
+import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount'; // ⭐️ Import thêm icon cho Giảng viên
 
-// Interface User (Giả định dựa trên AdminController)
+import api from '../../api/api'; 
+
 interface User {
   id: number;
+  studentCode: string;
   fullName: string;
   email: string;
+  className?: string;
+  role: string;
   avatarUrl?: string;
-  status: 'ACTIVE' | 'BANNED' | 'PENDING'; // Giả định trạng thái
+  active: boolean;
+  lastLogin?: string;
 }
 
-// ⭐️ QUAN TRỌNG: Export đúng tên 'UserManager'
 export const UserManager: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    // Gọi API lấy danh sách user khi component được mount
     fetchUsers();
   }, []);
 
   const fetchUsers = async () => {
     try {
-        // Lưu ý: Bạn cần bổ sung API @GetMapping("/users") vào AdminController java
-        // const response = await axios.get('/api/admin/users');
-        // setUsers(response.data);
+        setLoading(true);
+        const response = await api.get('/api/admin/users');
+        setUsers(response.data);
     } catch (error) {
         console.error("Lỗi tải danh sách người dùng", error);
+    } finally {
+        setLoading(false);
     }
   };
 
   const handleApproveUser = async (userId: number) => {
     try {
-        await axios.post(`/api/admin/approve-user/${userId}`);
-        alert("Đã duyệt người dùng thành công.");
-        fetchUsers();
+        await api.post(`/api/admin/approve-user/${userId}`);
+        fetchUsers(); 
     } catch (error) {
         alert("Lỗi khi duyệt người dùng.");
     }
@@ -49,14 +56,27 @@ export const UserManager: React.FC = () => {
     const confirm = window.confirm("Bạn có chắc chắn muốn khóa tài khoản này?");
     if(confirm) {
         try {
-            await axios.post(`/api/admin/ban-user/${userId}`);
-            alert("Đã khóa người dùng thành công.");
+            await api.post(`/api/admin/ban-user/${userId}`);
             fetchUsers();
         } catch (error) {
             alert("Lỗi khi khóa người dùng.");
         }
     }
   };
+
+  // ⭐️ Hàm hỗ trợ render Role Chip
+  const renderRoleChip = (role: string) => {
+    switch (role) {
+        case 'ADMIN':
+            return <Chip icon={<AdminPanelSettingsIcon />} label="Admin" color="error" size="small" variant="outlined" />;
+        case 'TEACHER': // ⭐️ Xử lý role Giảng viên
+            return <Chip icon={<SupervisorAccountIcon />} label="Giảng viên" color="primary" size="small" variant="outlined" />;
+        default: // STUDENT hoặc các role khác
+            return <Chip icon={<SchoolIcon />} label="Sinh viên" color="default" size="small" variant="outlined" />;
+    }
+  };
+
+  if (loading) return <Box sx={{ p: 3, textAlign: 'center' }}><CircularProgress /></Box>;
 
   return (
     <Box>
@@ -67,8 +87,10 @@ export const UserManager: React.FC = () => {
           <TableHead sx={{ bgcolor: '#f5f5f5' }}>
             <TableRow>
               <TableCell>ID</TableCell>
-              <TableCell>Thông tin cá nhân</TableCell>
+              <TableCell>Họ tên</TableCell>
+              <TableCell>Mã số</TableCell>
               <TableCell>Email</TableCell>
+              <TableCell>Vai trò</TableCell>
               <TableCell>Trạng thái</TableCell>
               <TableCell align="right">Hành động</TableCell>
             </TableRow>
@@ -77,38 +99,55 @@ export const UserManager: React.FC = () => {
              {users.length > 0 ? users.map((user) => (
                <TableRow key={user.id} hover>
                  <TableCell>{user.id}</TableCell>
+                 
                  <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Avatar src={user.avatarUrl} />
-                        <Typography variant="body2">{user.fullName}</Typography>
+                        <Avatar src={user.avatarUrl} alt={user.fullName} />
+                        <Box>
+                            <Typography variant="body2" fontWeight="bold">{user.fullName}</Typography>
+                            <Typography variant="caption" color="text.secondary">{user.className}</Typography>
+                        </Box>
                     </Box>
                  </TableCell>
+
+                 <TableCell>{user.studentCode}</TableCell>
                  <TableCell>{user.email}</TableCell>
+                 
+                 {/* ⭐️ Cột Vai trò: Gọi hàm render đã viết lại logic */}
+                 <TableCell>
+                    {renderRoleChip(user.role)}
+                 </TableCell>
+
                  <TableCell>
                     <Chip 
-                        label={user.status} 
-                        color={user.status === 'ACTIVE' ? 'success' : user.status === 'BANNED' ? 'error' : 'warning'}
+                        label={user.active ? "Hoạt động" : "Chờ duyệt / Khóa"} 
+                        color={user.active ? 'success' : 'error'}
                         size="small"
+                        sx={{ fontWeight: 'bold' }}
                     />
                  </TableCell>
+
                  <TableCell align="right">
-                    <Tooltip title="Duyệt / Mở khóa">
-                        <IconButton size="small" color="success" onClick={() => handleApproveUser(user.id)}>
-                            <CheckCircleIcon />
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Khóa tài khoản">
-                        <IconButton size="small" color="error" onClick={() => handleBanUser(user.id)}>
-                            <BlockIcon />
-                        </IconButton>
-                    </Tooltip>
+                    {!user.active ? (
+                        <Tooltip title="Duyệt / Mở khóa">
+                            <IconButton size="small" color="success" onClick={() => handleApproveUser(user.id)}>
+                                <CheckCircleIcon />
+                            </IconButton>
+                        </Tooltip>
+                    ) : (
+                        <Tooltip title="Khóa tài khoản">
+                            <IconButton size="small" color="error" onClick={() => handleBanUser(user.id)}>
+                                <BlockIcon />
+                            </IconButton>
+                        </Tooltip>
+                    )}
                  </TableCell>
                </TableRow>
              )) : (
                 <TableRow>
-                    <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
+                    <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
                         <Typography variant="body2" color="textSecondary">
-                            Chưa có dữ liệu hoặc chưa kết nối API lấy danh sách User.
+                            Không tìm thấy dữ liệu.
                         </Typography>
                     </TableCell>
                 </TableRow>
