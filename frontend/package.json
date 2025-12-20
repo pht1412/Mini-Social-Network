@@ -1,5 +1,9 @@
 {
+<<<<<<< HEAD
   "name": "front-end",
+=======
+  "name": "frontend",
+>>>>>>> origin/tphat
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -12,12 +16,21 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+<<<<<<< HEAD
     "@mui/icons-material": "^7.3.5",
     "@mui/material": "^7.3.5",
     "axios": "^1.13.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.9.5"
+=======
+    "@mui/icons-material": "^7.3.6",
+    "@mui/material": "^7.3.6",
+    "axios": "^1.13.2",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "react-router-dom": "^7.10.1"
+>>>>>>> origin/tphat
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
@@ -25,15 +38,23 @@
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "@vitejs/plugin-react": "^5.1.0",
+<<<<<<< HEAD
+=======
+    "babel-plugin-react-compiler": "^19.1.0-rc.3",
+>>>>>>> origin/tphat
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.3",
+<<<<<<< HEAD
     "vite": "npm:rolldown-vite@7.2.2"
   },
   "overrides": {
     "vite": "npm:rolldown-vite@7.2.2"
+=======
+    "vite": "^7.2.2"
+>>>>>>> origin/tphat
   }
 }

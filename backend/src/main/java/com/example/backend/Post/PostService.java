@@ -44,6 +44,7 @@ public class PostService {
     @Transactional
     public PostResponse createPost(PostRequest request) {
         User currentUser = getCurrentUser();
+        System.out.println("Creating post for user: " + currentUser.getStudentCode());
 
         Post post = new Post();
         post.setContent(request.getContent());
@@ -59,6 +60,8 @@ public class PostService {
         } else {
             post.setVisibility(request.getVisibility());
         }
+
+        // Xử lý lưu media files nếu có
 
         if (request.getMediaFiles() != null && !request.getMediaFiles().isEmpty()) {
             List<PostMedia> mediaList = new ArrayList<>();
@@ -151,6 +154,8 @@ public class PostService {
         authorDto.setFullName(author.getFullName());
         authorDto.setAvatarUrl(author.getAvatarUrl());
         authorDto.setStudentCode(author.getStudentCode()); 
+
+        List<PostMedia> mediaList = post.getMedia() == null ? new ArrayList<>() : post.getMedia();
 
         List<MediaResponse> mediaDtos = post.getMedia().stream()
                 .map(m -> MediaResponse.builder()
