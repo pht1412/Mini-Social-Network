@@ -1,5 +1,6 @@
 package com.example.backend.Post;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -7,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import com.example.backend.PostMedia.MediaResponse;
 import com.example.backend.User.User;
 import com.example.backend.User.UserResponse;
@@ -16,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class FeedService {
     private final PostRepository postRepository;
+    private final PostLikeRepository postLikeRepository;
 
     @Transactional(readOnly = true)
     // ⭐️ SỬA: Đổi tham số từ Long -> Integer để khớp với User Entity
@@ -25,9 +28,14 @@ public class FeedService {
         
         // Lưu ý: Nếu method findPostIdsLikedByUser bên Repo vẫn nhận Long, huynh cần ép kiểu (long) currentUserId
         // Nhưng tốt nhất nên sửa Repo nhận Integer. Tạm thời đệ ép kiểu Long ở đây để tránh lỗi biên dịch Repo.
-        Set<Long> likedPostIds = postRepository.findPostIdsLikedByUser(Long.valueOf(currentUserId), postIds);
+        Set<Long> likedPostIds = Collections.emptySet();
+        if (!postIds.isEmpty()) {
+                likedPostIds = postLikeRepository.findPostIdsLikedByUser((long) currentUserId, postIds);
+        }
+
+        final Set<Long> finalLikedPostIds = likedPostIds;
         
-        return postPage.map(post -> mapToPostResponse(post, likedPostIds));
+        return postPage.map(post -> mapToPostResponse(post, finalLikedPostIds));
     }
 
     private PostResponse mapToPostResponse(Post post, Set<Long> likedPostIds) {

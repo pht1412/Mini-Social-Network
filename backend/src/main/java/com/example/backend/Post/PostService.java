@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -31,6 +32,7 @@ import lombok.RequiredArgsConstructor;
 public class PostService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final PostLikeRepository postLikeRepository;
 
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
@@ -145,6 +147,29 @@ public class PostService {
                 .orElseThrow(() -> new RuntimeException("Bài viết không tồn tại!"));
         post.setVisibility(Visibility.PUBLIC); // Admin duyệt -> Thành PUBLIC
         postRepository.save(post);
+    }
+
+    @Transactional
+    public void toggleLike(Long postId) {
+        User currentUser = getCurrentUser();
+        Long userId = Long.valueOf(currentUser.getId());
+        Optional<PostLike> existingLike = postLikeRepository.findByPostIdAndUserId(postId, userId);
+
+        if (existingLike.isPresent()) {
+            postLikeRepository.delete(existingLike.get());
+            postRepository.decrementLikeCount(postId);
+        } else {
+            User user = getCurrentUser();
+            Post post = postRepository.getReferenceById(postId);
+
+            PostLike newLike = PostLike.builder()
+                    .post(post)
+                    .user(user)
+                    .build();
+            
+            postLikeRepository.save(newLike);
+            postRepository.incrementLikeCount(postId);
+        }
     }
 
     private PostResponse mapToPostResponse(Post post) {

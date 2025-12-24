@@ -4,13 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-
-import com.example.backend.User.LoginRequest;
-import com.example.backend.User.RegisterRequest;
-import com.example.backend.User.User;
-import com.example.backend.User.AuthService;
-import com.example.backend.User.UserRepository;
-
 import java.util.HashMap;
 import java.util.Map;
 

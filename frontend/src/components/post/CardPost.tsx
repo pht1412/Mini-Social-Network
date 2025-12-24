@@ -1,158 +1,28 @@
-<<<<<<< HEAD
-import React from 'react';
-import {
-  Card, CardHeader, CardContent, CardMedia, CardActions,
-  Avatar, IconButton, Typography, Box, Divider, Button, Link
-} from '@mui/material';
-// ⭐️ 1. Import Link của React Router
-=======
 import React, { useState } from 'react';
 import {
-  Card, CardHeader, CardContent, CardMedia, CardActions,
+  Card, CardHeader, CardContent, CardActions,
   Avatar, IconButton, Typography, Box, Divider, Button, Link,
-  Menu, MenuItem, ListItemIcon
+  Menu, MenuItem, ListItemIcon,
+  Collapse
 } from '@mui/material';
->>>>>>> origin/tphat
 import { Link as RouterLink } from 'react-router-dom';
 
 // Import Icons
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import ThumbUpOutlinedIcon from '@mui/icons-material/ThumbUpOutlined';
+import ThumbUpOutlinedIcon from '@mui/icons-material/ThumbUpOutlined'; // Like rỗng
+import ThumbUpIcon from '@mui/icons-material/ThumbUp'; // ⭐️ Thêm: Like đặc (đã like)
 import ChatBubbleOutlineOutlinedIcon from '@mui/icons-material/ChatBubbleOutlineOutlined';
 import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
-<<<<<<< HEAD
-
-// 2. DỮ LIỆU MẪU (Mock Data)
-const mockPost = {
-  user: {
-    id: "lehuynhphat", // ⭐️ Thêm ID
-    name: "Lê Hồng Phát", 
-    avatarUrl: "https://placehold.co/40x40/EFEFEF/333?text=LHP", 
-  },
-  timestamp: "9 tháng 11 lúc 20:03",
-  content: "Lâu lắm mới thay avatar", 
-  imageUrl: "https://placehold.co/600x400/CCCCCC/333?text=Post+Image+Here", 
-  stats: {
-    likes: "33K",
-    comments: 628,
-    shares: 237,
-  },
-};
-// ----------------------------------
-
-export default function PostCard() {
-  return (
-    <Card sx={{ maxWidth: '100%', margin: 'auto', mb: 3 }}>
-      
-      {/* 1. HEADER CỦA BÀI ĐĂNG */}
-      <CardHeader
-        avatar={
-          // ⭐️ 3. Dùng RouterLink bọc Avatar
-          // component={RouterLink} biến Link của MUI thành Link của Router
-          <Link component={RouterLink} to={`/profile/${mockPost.user.id}`}>
-            <Avatar 
-              src={mockPost.user.avatarUrl} 
-              alt={mockPost.user.name} 
-            />
-          </Link>
-        }
-        action={
-          <IconButton aria-label="settings">
-            <MoreVertIcon />
-          </IconButton>
-        }
-        title={
-          // ⭐️ 4. Dùng RouterLink bọc Tên
-          <Link 
-            component={RouterLink} 
-            to={`/profile/${mockPost.user.id}`}
-            variant="h6"
-            sx={{ 
-              fontWeight: 'bold', 
-              textDecoration: 'none', 
-              color: 'text.primary',
-              '&:hover': { textDecoration: 'underline' }
-            }}
-          >
-            {mockPost.user.name}
-          </Link>
-        }
-        subheader={
-          <Typography variant="body2" color="text.secondary">
-            {mockPost.timestamp}
-          </Typography>
-        }
-      />
-
-      {/* 2. NỘI DUNG TEXT */}
-      <CardContent sx={{ pt: 0 }}>
-        <Typography variant="body1" color="text.primary">
-          {mockPost.content}
-        </Typography>
-      </CardContent>
-
-      {/* 3. NỘI DUNG HÌNH ẢNH */}
-      {mockPost.imageUrl && (
-        <CardMedia
-          component="img"
-          image={mockPost.imageUrl}
-          alt="Nội dung bài đăng"
-          sx={{ maxHeight: '600px', objectFit: 'contain' }}
-        />
-      )}
-
-      {/* 4. THANH THỐNG KÊ (STATS) */}
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        p: 2, 
-        pb: 1 
-      }}>
-        <Typography variant="body2" color="text.secondary">
-          👍😂 {mockPost.stats.likes}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {mockPost.stats.comments} bình luận &bull; {mockPost.stats.shares} chia sẻ
-        </Typography>
-      </Box>
-
-      <Divider variant="middle" />
-
-      {/* 5. CÁC NÚT ACTIONS */}
-      <CardActions sx={{ justifyContent: 'space-around', p: 1 }}>
-        <Button 
-          fullWidth 
-          startIcon={<ThumbUpOutlinedIcon />}
-          sx={{ color: 'text.secondary' }}
-        >
-          Thích
-        </Button>
-        <Button 
-          fullWidth 
-          startIcon={<ChatBubbleOutlineOutlinedIcon />}
-          sx={{ color: 'text.secondary' }}
-        >
-          Bình luận
-        </Button>
-        <Button 
-          fullWidth 
-          startIcon={<ShareOutlinedIcon />}
-          sx={{ color: 'text.secondary' }}
-        >
-          Chia sẻ
-        </Button>
-      </CardActions>
-    </Card>
-=======
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 
-// Import Component Edit mà bạn đã tạo ở bước trước
-import EditPost from './EditPost'; // Đảm bảo đường dẫn đúng
+// Import API & Components
+import api from '../../api/api'; // ⭐️ Sử dụng axios instance thay vì fetch trần
+import EditPost from './EditPost';
 import PostMediaGrid from './PostMediaGrid';
+import CommentSection from '../comment/CommentSection';
 
-// --- Types (Giữ nguyên của bạn) ---
+// --- Types ---
 export interface PostMedia {
   id: number;
   url: string;
@@ -161,7 +31,7 @@ export interface PostMedia {
 
 export interface PostAuthor {
   id: number;
-  username: string;
+  username: string; // hoặc studentCode tùy backend
   fullName: string;
   avatarUrl: string;
 }
@@ -174,13 +44,13 @@ export interface PostData {
   media: PostMedia[];
   likeCount: number;
   commentCount: number;
-  likedByCurrentUser: boolean;
-  visibility?: string; // Thêm field này nếu cần dùng trong Edit
+  likedByCurrentUser: boolean; // ⭐️ Backend phải trả về field này
+  visibility?: string;
 }
 
 interface PostCardProps {
   post: PostData;
-  onDeleteSuccess: (id: number) => void; // Callback để báo cho cha xóa card này khỏi list
+  onDeleteSuccess: (id: number) => void;
 }
 
 const formatDate = (dateString: string) => {
@@ -194,19 +64,20 @@ const formatDate = (dateString: string) => {
 export default function PostCard({ post: initialPost, onDeleteSuccess }: PostCardProps) {
   
   // 1. STATE QUẢN LÝ DỮ LIỆU LOCAL
-  // Tại sao cần? Vì props là read-only. Khi sửa xong, ta update state này để UI thay đổi ngay.
   const [post, setPost] = useState<PostData>(initialPost);
 
   // 2. STATE MENU & DIALOG
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [showComments, setShowComments] = useState(false);
   
   const isMenuOpen = Boolean(anchorEl);
 
-  // Giả định User ID hiện tại (Trong thực tế bạn lấy từ Context/Redux)
-  const currentUserId = 1; 
-  // Chỉ hiện menu nếu là bài của chính mình
-  const isOwner = post.author.id === currentUserId; 
+  // Giả định User ID (Thực tế nên lấy từ Context/Redux)
+  // const currentUserId = 1; 
+  // const isOwner = post.author.id === currentUserId; 
+  // ⭐️ Tạm thời cho hiện menu luôn để test, sau này uncomment dòng trên
+  const isOwner = true; 
 
   // --- HANDLERS ---
   const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -222,39 +93,59 @@ export default function PostCard({ post: initialPost, onDeleteSuccess }: PostCar
     handleMenuClose();
   };
 
+  // ⭐️ LOGIC LIKE (QUAN TRỌNG)
+  const handleLikeClick = async () => {
+    // 1. Snapshot: Lưu lại trạng thái cũ phòng khi API lỗi
+    const previousPostState = { ...post };
+
+    // 2. Optimistic Update: Cập nhật giao diện NGAY LẬP TỨC
+    const isCurrentlyLiked = post.likedByCurrentUser;
+    
+    setPost(prev => ({
+        ...prev,
+        likedByCurrentUser: !isCurrentlyLiked, // Đảo trạng thái
+        likeCount: isCurrentlyLiked ? prev.likeCount - 1 : prev.likeCount + 1 // Tăng/Giảm số lượng
+    }));
+
+    try {
+        // 3. Gọi API ngầm (Fire and Forget)
+        // Endpoint: POST /api/posts/{id}/like
+        await api.post(`/api/posts/${post.id}/like`);
+        // Nếu thành công thì thôi, không cần làm gì vì UI đã đúng rồi
+    } catch (error) {
+        console.error("Lỗi khi like bài viết:", error);
+        // 4. Nếu lỗi: Revert (Hoàn tác) lại giao diện như cũ
+        setPost(previousPostState);
+    }
+  };
+
   // Logic Xóa bài viết
   const handleDeleteClick = async () => {
     if (window.confirm("Bạn có chắc chắn muốn xóa bài viết này không?")) {
         try {
-            const response = await fetch(`http://localhost:8080/api/posts/${post.id}`, {
-                method: 'DELETE',
-                // headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            if (response.ok) {
-                onDeleteSuccess(post.id); // Gọi lên cha để xóa khỏi DOM
-            } else {
-                alert("Xóa thất bại!");
-            }
+            // ⭐️ Dùng api instance thay cho fetch để code gọn hơn
+            await api.delete(`/api/posts/${post.id}`);
+            onDeleteSuccess(post.id); // Báo cha xóa khỏi list
         } catch (error) {
             console.error("Error deleting post:", error);
-            alert("Lỗi kết nối server!");
+            alert("Lỗi khi xóa bài viết!");
         }
     }
     handleMenuClose();
   };
 
-  // Callback khi sửa thành công từ Dialog
+  // Callback khi sửa thành công
   const handleUpdateSuccess = (updatedPost: PostData) => {
-      setPost(updatedPost); // Cập nhật lại UI của Card này bằng data mới
+      setPost(updatedPost);
   };
 
-  // Lấy ảnh đầu tiên (Dùng logic của bạn)
-  const firstImage = post.media && post.media.length > 0 ? post.media[0].url : null;
+  const handleCommentClick = () => {
+    setShowComments(!showComments);
+  };
 
   return (
     <>
-      <Card sx={{ maxWidth: '100%', margin: 'auto', mb: 3 }}>
+      <Card sx={{ maxWidth: '100%', margin: 'auto', mb: 3, boxShadow: 3, borderRadius: 2 }}>
         
         {/* HEADER */}
         <CardHeader
@@ -264,7 +155,6 @@ export default function PostCard({ post: initialPost, onDeleteSuccess }: PostCar
             </Link>
           }
           action={
-            // Chỉ hiện nút 3 chấm nếu là chủ bài viết (Optional)
             // isOwner && (
               <IconButton aria-label="settings" onClick={handleMenuClick}>
                 <MoreVertIcon />
@@ -286,13 +176,11 @@ export default function PostCard({ post: initialPost, onDeleteSuccess }: PostCar
           }
         />
 
-        {/* MENU OPTIONS (ẨN/HIỆN) */}
+        {/* MENU OPTIONS */}
         <Menu
           anchorEl={anchorEl}
           open={isMenuOpen}
           onClose={handleMenuClose}
-          transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-          anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         >
           <MenuItem onClick={handleEditClick}>
             <ListItemIcon><EditIcon fontSize="small" /></ListItemIcon>
@@ -311,43 +199,82 @@ export default function PostCard({ post: initialPost, onDeleteSuccess }: PostCar
           </Typography>
         </CardContent>
 
-        {/* MEDIA */}
+        {/* MEDIA GRID */}
         {post.media && post.media.length > 0 && (
           <PostMediaGrid media={post.media} />
         )}
 
         {/* STATS */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, pb: 1 }}>
-          <Typography variant="body2" color="text.secondary">👍 {post.likeCount}</Typography>
-          <Typography variant="body2" color="text.secondary">{post.commentCount} bình luận</Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+             {/* Icon nhỏ hiển thị cạnh số like */}
+             <ThumbUpIcon sx={{ width: 16, height: 16, color: 'primary.main', mr: 0.5 }} />
+             <Typography variant="body2" color="text.secondary">{post.likeCount}</Typography>
+          </Box>
+          
+          <Typography 
+            variant="body2" 
+            color="text.secondary" 
+            sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+            onClick={handleCommentClick}
+          >
+            {post.commentCount} bình luận
+          </Typography>
         </Box>
 
-        <Divider variant="middle" />
+        <Divider variant="middle" sx={{ my: 0.5 }} />
 
         {/* ACTIONS */}
         <CardActions sx={{ justifyContent: 'space-around', p: 1 }}>
-          <Button fullWidth startIcon={<ThumbUpOutlinedIcon />} sx={{ color: post.likedByCurrentUser ? 'primary.main' : 'text.secondary' }}>
+          
+          {/* ⭐️ NÚT LIKE ĐÃ GẮN HÀM XỬ LÝ */}
+          <Button 
+            fullWidth 
+            onClick={handleLikeClick}
+            startIcon={post.likedByCurrentUser ? <ThumbUpIcon /> : <ThumbUpOutlinedIcon />} 
+            sx={{ 
+                color: post.likedByCurrentUser ? 'primary.main' : 'text.secondary',
+                fontWeight: post.likedByCurrentUser ? 'bold' : 'normal',
+                textTransform: 'none'
+            }}
+          >
             Thích
           </Button>
-          <Button fullWidth startIcon={<ChatBubbleOutlineOutlinedIcon />} sx={{ color: 'text.secondary' }}>
+
+          <Button 
+            fullWidth 
+            onClick={handleCommentClick}
+            startIcon={<ChatBubbleOutlineOutlinedIcon />} 
+            sx={{ color: 'text.secondary', textTransform: 'none' }}
+          >
             Bình luận
           </Button>
-          <Button fullWidth startIcon={<ShareOutlinedIcon />} sx={{ color: 'text.secondary' }}>
+          <Button fullWidth startIcon={<ShareOutlinedIcon />} sx={{ color: 'text.secondary', textTransform: 'none' }}>
             Chia sẻ
           </Button>
         </CardActions>
+
+        <Collapse in={showComments} timeout="auto" unmountOnExit>
+            <Divider />
+            <Box sx={{ p: 2 }}>
+                <CommentSection 
+                    postId={post.id} 
+                    // Nếu bạn có thông tin user hiện tại ở context thì truyền vào đây để hiện avatar cạnh ô input
+                    currentUserAvatar="https://via.placeholder.com/150" 
+                />
+            </Box>
+        </Collapse>
       </Card>
 
-      {/* COMPONENT EDIT DIALOG (Sẽ hiện lên khi bấm Sửa) */}
+      {/* EDIT COMPONENT */}
       {isEditDialogOpen && (
         <EditPost
           open={isEditDialogOpen}
           onClose={() => setIsEditDialogOpen(false)}
-          post={post} // Truyền data hiện tại vào form
-          onUpdateSuccess={handleUpdateSuccess} // Hứng data mới sau khi API trả về
+          post={post}
+          onUpdateSuccess={handleUpdateSuccess}
         />
       )}
     </>
->>>>>>> origin/tphat
   );
 }

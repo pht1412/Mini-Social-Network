@@ -2,6 +2,8 @@ package com.example.backend.Post;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -10,8 +12,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import com.example.backend.Post.PostRequest;
-
+import com.example.backend.User.User;
 import lombok.RequiredArgsConstructor;
 import jakarta.validation.Valid;
 
@@ -35,5 +36,11 @@ public class PostController {
     @DeleteMapping("/{id}")
     public String deletePost(@PathVariable Long id) {
         return postService.deletePost(id);
+    }
+
+    @PostMapping("/{postId}/like")
+    public ResponseEntity<?> toggleLike(@PathVariable Long postId, @AuthenticationPrincipal User user) {
+        postService.toggleLike(postId);
+        return ResponseEntity.ok("Thành công");
     }
 }

@@ -1,51 +1,15 @@
-<<<<<<< HEAD
-import React from 'react';
-import { Container, Grid } from '@mui/material';
-
-import PostCard from '../components/post/CardPost';
-import LeftSidebar from '../components/LeftSidebar';
-import RightSidebar from '../components/RightSidebar';
-
-// ⭐️ BƯỚC 1: Import component CreatePost
-import CreatePost from '../components/post/CreatePost';
-
-export default function HomePage() {
-  return (
-    <Container maxWidth="lg" sx={{ mt: 3 }}>
-      <Grid container spacing={3}>
-
-        {/* CỘT BÊN TRÁI (3/12) */}
-        <Grid xs={12} md={3} sx={{ display: { xs: 'none', md: 'block' } }}>
-          <LeftSidebar />
-        </Grid>
-
-        {/* CỘT Ở GIỮA (6/12) */}
-        <Grid xs={12} md={6}>
-          
-          {/* ⭐️ BƯỚC 2: Thêm component CreatePost vào đây */}
-          <CreatePost />
-          
-          {/* Hiển thị các bài đăng */}
-          <PostCard />
-          <PostCard />
-          <PostCard />
-        </Grid>
-
-        {/* CỘT BÊN PHẢI (3/12) */}
-        <Grid xs={12} md={3} sx={{ display: { xs: 'none', md: 'block' } }}>
-          <RightSidebar />
-=======
 import React, { useEffect, useState } from 'react';
 import { Container, Grid, CircularProgress, Box, Typography } from '@mui/material';
 
-// Import Component
 import PostCard, { type PostData } from '../components/post/CardPost';
 import LeftSidebar from '../components/LeftSidebar';
 import RightSidebar from '../components/RightSidebar';
 import CreatePost from '../components/post/CreatePost';
+import api from '../api/api';
 
 export default function HomePage() {
   const [posts, setPosts] = useState<PostData[]>([]);
+  // ⭐️ ĐÃ XÓA: const [user, setUser]
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -54,13 +18,14 @@ export default function HomePage() {
   };
 
   useEffect(() => {
+    // ⭐️ ĐÃ XÓA: fetchUserProfile
+    
     const fetchPosts = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:8080/api/feed'); 
-        if (!response.ok) throw new Error('Network response was not ok');
-        const data = await response.json();
-        setPosts(data.content || []); 
+        const response = await api.get('/api/feed');
+        console.log("Fetched feed response:", response);
+        setPosts(response.data.content || []); 
       } catch (err) {
         console.error("Failed to fetch posts:", err);
         setError("Không thể tải bảng tin. Vui lòng thử lại sau.");
@@ -68,30 +33,25 @@ export default function HomePage() {
         setLoading(false);
       }
     };
+
     fetchPosts();
   }, []);
 
   return (
-    // ⭐️ THAY ĐỔI 1: Dùng maxWidth="xl" để mở rộng ra 2 bên màn hình to
-    // Nếu muốn sát sạt lề luôn thì dùng: maxWidth={false}
     <Container maxWidth="xl" sx={{ mt: 3, px: { xs: 1, md: 5 } }}> 
-      
-      {/* ⭐️ THAY ĐỔI 2: Giảm spacing từ 3 xuống 2 để tiết kiệm khoảng trắng thừa */}
       <Grid container spacing={2} justifyContent="center">
-
-        {/* CỘT BÊN TRÁI */}
-        {/* lg={2}: Màn hình to thì chiếm 2 phần. md={3}: Màn hình laptop thì chiếm 3 phần */}
+        {/* LEFT SIDEBAR */}
         <Grid item xs={12} md={3} lg={2} sx={{ display: { xs: 'none', md: 'block' }}}>
-          <Box sx={{ position: 'sticky', top: 80 }}> {/* Giữ sidebar khi cuộn */}
+          <Box sx={{ position: 'sticky', top: 80 }}>
             <LeftSidebar />
           </Box>
         </Grid>
 
-        {/* CỘT Ở GIỮA (NEWSFEED) */}
-        {/* lg={8}: Màn hình to chiếm 8 phần (Rất rộng). md={6}: Laptop chiếm 6 phần */}
+        {/* NEWSFEED */}
         <Grid item xs={12} md={6} lg={8}>
-          <Box sx={{ maxWidth: '800px', mx: 'auto' }}> {/* Giới hạn max-width để bài viết không bị bè quá mức trên màn hình siêu rộng */}
+          <Box sx={{ maxWidth: '800px', mx: 'auto' }}>
           
+            {/* CreatePost bây giờ tự lo liệu dữ liệu user của nó */}
             <CreatePost />
             
             {loading ? (
@@ -107,19 +67,15 @@ export default function HomePage() {
                 <PostCard key={post.id} post={post} onDeleteSuccess={handleRemovePost} />
               ))
             )}
-          
           </Box>
         </Grid>
 
-        {/* CỘT BÊN PHẢI */}
-        {/* Tương tự cột trái: lg={2}, md={3} */}
+        {/* RIGHT SIDEBAR */}
         <Grid item xs={12} md={3} lg={2} sx={{ display: { xs: 'none', md: 'block' }}}>
           <Box sx={{ position: 'sticky', top: 80 }}>
              <RightSidebar />
           </Box>
->>>>>>> origin/tphat
         </Grid>
-
       </Grid>
     </Container>
   );
