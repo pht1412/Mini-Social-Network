@@ -41,13 +41,14 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration cfg = new CorsConfiguration();
-                    cfg.setAllowedOrigins(List.of("http://localhost:5173")); // Vite Port
+                    cfg.setAllowedOrigins(List.of("http://localhost:5173"));
                     cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
                     cfg.setAllowedHeaders(List.of("*"));
+                    cfg.setAllowCredentials(true);
                     return cfg;
                 }))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/login", "/api/auth/register","/uploads/**").permitAll()
+                        .requestMatchers("/api/auth/login", "/api/auth/register","/uploads/**", "/ws/**").permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(daoAuthenticationProvider())

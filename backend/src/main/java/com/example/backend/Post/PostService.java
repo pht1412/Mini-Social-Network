@@ -12,12 +12,15 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.backend.Enum.MediaType;
+import com.example.backend.Enum.NotificationType;
 import com.example.backend.Enum.Visibility;
+import com.example.backend.Event.NotificationEvent;
 import com.example.backend.PostMedia.MediaResponse;
 import com.example.backend.PostMedia.PostMedia;
 import com.example.backend.User.User;
@@ -33,6 +36,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final PostLikeRepository postLikeRepository;
+    private final ApplicationEventPublisher evenPublisher;
 
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
@@ -161,6 +165,7 @@ public class PostService {
         } else {
             User user = getCurrentUser();
             Post post = postRepository.getReferenceById(postId);
+            User author = post.getAuthor();
 
             PostLike newLike = PostLike.builder()
                     .post(post)
@@ -169,6 +174,9 @@ public class PostService {
             
             postLikeRepository.save(newLike);
             postRepository.incrementLikeCount(postId);
+            evenPublisher.publishEvent(new NotificationEvent(
+                currentUser, author, NotificationType.LIKE_POST, postId, "POST", "đã thích bài viết của bạn"
+            ));
         }
     }
 

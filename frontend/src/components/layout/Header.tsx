@@ -1,19 +1,16 @@
-import React from 'react';
 import { 
   AppBar, Toolbar, Box, InputBase, 
   IconButton, Tooltip, Button, Avatar 
 } from '@mui/material';
 import { styled, alpha } from '@mui/material/styles';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-
 import SearchIcon from '@mui/icons-material/Search';
 import HomeIcon from '@mui/icons-material/Home';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'; 
 import LogoutIcon from '@mui/icons-material/Logout';
-
 import { useAuth } from '../../context/AuthContext';
+import NotificationBell from '../notification/NotificationBell';
 
-// Style cho ô tìm kiếm
 const Search = styled('div')(({ theme }) => ({
   position: 'relative',
   borderRadius: '20px', 
@@ -43,7 +40,6 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   color: 'inherit',
   '& .MuiInputBase-input': {
     padding: theme.spacing(1, 1, 1, 0),
-    // vertical padding + font size from searchIcon
     paddingLeft: `calc(1em + ${theme.spacing(4)})`,
     transition: theme.transitions.create('width'),
     width: '100%',
@@ -63,8 +59,6 @@ export default function Header() {
   };
 
   return (
-    // ⭐️ SỬA ĐỔI QUAN TRỌNG:
-    // Thay màu mặc định bằng Gradient Indigo-Violet để khớp với Login/Register
     <AppBar position="sticky" sx={{ 
       background: 'linear-gradient(90deg, #4F46E5 0%, #7C3AED 100%)', 
       boxShadow: '0 4px 20px 0px rgba(0, 0, 0, 0.1)' 
@@ -73,7 +67,6 @@ export default function Header() {
         
         {/* ----- CỤM BÊN TRÁI ----- */}
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          {/* Nếu huynh có logo ảnh thì dùng, không thì dùng Text Logo cho đẹp */}
           <Box 
             onClick={() => navigate('/')} 
             sx={{ 
@@ -124,19 +117,23 @@ export default function Header() {
                     to="/admin/dashboard" 
                     color="inherit"
                     sx={{ 
-                      // Dùng màu cam hoặc hồng làm điểm nhấn trên nền tím
-                      bgcolor: 'rgba(236, 72, 153, 0.2)', // Pink transparent
+                      bgcolor: 'rgba(236, 72, 153, 0.2)', 
                       border: '1px solid rgba(236, 72, 153, 0.5)',
                       '&:hover': { bgcolor: 'rgba(236, 72, 153, 0.4)' },
                       mr: 1
                     }}
                   >
-                    <AdminPanelSettingsIcon sx={{ color: '#FBCFE8' }} /> {/* Pink Light */}
+                    <AdminPanelSettingsIcon sx={{ color: '#FBCFE8' }} />
                   </IconButton>
                 </Tooltip>
               )}
 
-              {/* Avatar */}
+              <Tooltip title="Thông báo">
+                  <Box> 
+                     <NotificationBell />
+                  </Box>
+              </Tooltip>
+
               <Tooltip title={`Xin chào, ${user?.fullName || 'User'}`}>
                 <IconButton component={RouterLink} to="/profile" sx={{ p: 0, border: '2px solid rgba(255,255,255,0.5)' }}>
                   <Avatar alt={user?.fullName} src={user?.avatarUrl || "/static/images/avatar/1.jpg"} />
@@ -151,7 +148,7 @@ export default function Header() {
             </>
           ) : (
             <>
-              {/* Nút Đăng nhập/Đăng ký style mới */}
+              {/* Nút Đăng nhập/Đăng ký */}
               <Button 
                 color="inherit" 
                 variant="text" 
@@ -167,7 +164,7 @@ export default function Header() {
                 to="/register"
                 sx={{ 
                     bgcolor: 'white', 
-                    color: '#4F46E5', // Chữ màu Indigo
+                    color: '#4F46E5', 
                     fontWeight: 'bold',
                     '&:hover': { bgcolor: '#F3F4F6' }
                 }}

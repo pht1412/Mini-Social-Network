@@ -4,11 +4,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.example.backend.Enum.NotificationType;
+import com.example.backend.Event.NotificationEvent;
 import com.example.backend.Post.Post;
 import com.example.backend.Post.PostRepository;
 import com.example.backend.User.User;
@@ -24,6 +29,7 @@ public class CommentService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final CommentLikeRepository commentLikeRepository;
+    private final ApplicationEventPublisher evenPublisher;
 
     private User getCurrentUser() {
         String studentCode = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -56,6 +62,10 @@ public class CommentService {
         
         Comment savedComment = commentRepository.save(comment);
         postRepository.incrementCommentCount(post.getId());
+
+        evenPublisher.publishEvent(new NotificationEvent(
+                currentUser, post.getAuthor(), NotificationType.COMMENT_POST, post.getId(), "COMMENT", "đã thích bài viết của bạn"
+        ));
 
         return mapToResponse(savedComment, false);
     }
