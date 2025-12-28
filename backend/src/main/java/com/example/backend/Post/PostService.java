@@ -13,6 +13,10 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -56,7 +60,7 @@ public class PostService {
         post.setContent(request.getContent());
         post.setAuthor(currentUser);
         post.setSharer(currentUser);
-        post.setOriginalPost(post);
+        post.setOriginalPost(null);
 
         // ⭐️ CHIÊU 1: CẦM CHẾ THUẬT (Kiểm soát Visibility)
         // Nếu user chọn PUBLIC -> Ép về PENDING để Admin duyệt.
@@ -180,7 +184,44 @@ public class PostService {
         }
     }
 
-    private PostResponse mapToPostResponse(Post post) {
+    @Transactional
+    public PostResponse sharePost(Long originalPostId, PostRequest request) {
+        User currentUser = getCurrentUser();
+        Post originalPost = postRepository.findById(originalPostId)
+                .orElseThrow(() -> new RuntimeException("Bài viết gốc không tồn tại"));
+        Post rootPost = originalPost.getOriginalPost() != null ? originalPost.getOriginalPost() : originalPost;
+        if (rootPost.getVisibility() == Visibility.PRIVATE) {
+             throw new RuntimeException("Không thể chia sẻ bài viết riêng tư");
+        }
+        Post share = new Post();
+        share.setContent(request.getContent());
+        share.setAuthor(currentUser);
+        share.setSharer(currentUser);
+        share.setOriginalPost(rootPost);
+        share.setVisibility(Visibility.PUBLIC);
+        rootPost.setShareCount(rootPost.getShareCount() + 1);
+        postRepository.save(rootPost);
+        Post savedShare = postRepository.save(share);
+        evenPublisher.publishEvent(new NotificationEvent(
+            currentUser, 
+            rootPost.getAuthor(), 
+            NotificationType.SHARE_POST,
+            rootPost.getId(), 
+            "POST", 
+            "đã chia sẻ bài viết của bạn."
+        ));
+        return mapToPostResponse(savedShare);
+    }
+
+    public Page<PostResponse> getPostsByAuthor(int page, int size) {
+        User currentUser = getCurrentUser();
+        Integer authorId = currentUser.getId();
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Post> posts = postRepository.findByAuthorId(authorId, pageable);
+        return posts.map(this::mapToPostResponse);
+    }
+
+    public PostResponse mapToPostResponse(Post post) {
         User author = post.getAuthor();
         UserResponse authorDto = new UserResponse();
         authorDto.setId(author.getId());
@@ -198,6 +239,16 @@ public class PostService {
                         .build())
                 .collect(Collectors.toList());
 
+        PostResponse originalPostResponse = null;
+        
+        if (post.getOriginalPost() != null) {
+            if (post.getOriginalPost().getId().equals(post.getId())) {
+                originalPostResponse = null; 
+            } else {
+                originalPostResponse = mapToPostResponse(post.getOriginalPost());
+            }
+        }
+
         return PostResponse.builder()
                 .id(post.getId())
                 .content(post.getContent())
@@ -208,7 +259,9 @@ public class PostService {
                 .media(mediaDtos)
                 .likeCount(post.getLikeCount())
                 .commentCount(post.getCommentCount())
+                .shareCount(post.getShareCount())
                 .isLikedByCurrentUser(false)
+                .originalPost(originalPostResponse)
                 .build();
     }
 

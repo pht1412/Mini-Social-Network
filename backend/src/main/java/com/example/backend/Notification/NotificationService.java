@@ -127,6 +127,8 @@ public class NotificationService {
                 return "đã thích bài viết của bạn.";
             case COMMENT_POST:
                 return "đã bình luận về bài viết của bạn.";
+            case SHARE_POST:
+                return "đã chia sẻ bài viết của bạn.";
             case FRIEND_REQUEST:
                 return "đã gửi cho bạn lời mời kết bạn.";
             case ACCEPT_FRIEND:

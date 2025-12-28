@@ -7,7 +7,7 @@ import Footer from './components/layout/Footer';
 import { AdminLayout } from './components/layout/AdminLayout';
 
 import HomePage from './pages/HomePage';
-import ProfilePage from './pages/ProfilePage';
+import Profile from './pages/Profile';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 
@@ -17,6 +17,8 @@ import { UserManager } from './pages/admin/UserManager';
 
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { WebSocketProvider } from './context/WebSocketContext';
+import { ChatProvider } from './context/ChatContext';
+import PostDetailPage from './pages/PostDetailPage';
 
 /* ================= PRIVATE ROUTE ================= */
 const PrivateRoute = ({ children }: { children: JSX.Element }) => {
@@ -29,69 +31,73 @@ function App() {
   return (
     // AuthProvider sẽ nằm trong BrowserRouter của main.tsx
     <WebSocketProvider>
-      <AuthProvider>
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              minHeight: '100vh',
-              bgcolor: 'background.default',
-            }}
-          >
-            <Header />
+      <ChatProvider>
+        <AuthProvider>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                minHeight: '100vh',
+                bgcolor: 'background.default',
+              }}
+            >
+              <Header />
 
-            <main style={{ flexGrow: 1 }}>
-              <Routes>
-                {/* ===== PUBLIC ROUTES ===== */}
-                <Route path="/" element={<HomePage />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
+              <main style={{ flexGrow: 1 }}>
+                <Routes>
+                  {/* ===== PUBLIC ROUTES ===== */}
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
 
-                {/* ===== PROTECTED USER ROUTES ===== */}
-                <Route
-                  path="/profile"
-                  element={
-                    <PrivateRoute>
-                      <ProfilePage />
-                    </PrivateRoute>
-                  }
-                />
+                  {/* ===== PROTECTED USER ROUTES ===== */}
+                  <Route
+                    path="/profile"
+                    element={
+                      <PrivateRoute>
+                        <Profile />
+                      </PrivateRoute>
+                    }
+                  />
 
-                <Route
-                  path="/profile/:userId"
-                  element={
-                    <PrivateRoute>
-                      <ProfilePage />
-                    </PrivateRoute>
-                  }
-                />
+                  <Route path="/posts/:postId" element={<PostDetailPage />} />
 
-                {/* ===== ADMIN ROUTES ===== */}
-                <Route
-                  path="/admin"
-                  element={
-                    <PrivateRoute>
-                      <AdminLayout>
-                          <Outlet />
-                      </AdminLayout>
-                    </PrivateRoute>
-                  }
-                >
-                  <Route index element={<AdminDashboard />} />
-                  <Route path="dashboard" element={<AdminDashboard />} />
-                  <Route path="posts" element={<PostManager />} />
-                  <Route path="users" element={<UserManager />} />
-                  <Route path="*" element={<Navigate to="dashboard" replace />} />
-                </Route>
+                  <Route
+                    path="/profile/:userId"
+                    element={
+                      <PrivateRoute>
+                        <Profile />
+                      </PrivateRoute>
+                    }
+                  />
 
-                {/* ===== FALLBACK ===== */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </main>
+                  {/* ===== ADMIN ROUTES ===== */}
+                  <Route
+                    path="/admin"
+                    element={
+                      <PrivateRoute>
+                        <AdminLayout>
+                            <Outlet />
+                        </AdminLayout>
+                      </PrivateRoute>
+                    }
+                  >
+                    <Route index element={<AdminDashboard />} />
+                    <Route path="dashboard" element={<AdminDashboard />} />
+                    <Route path="posts" element={<PostManager />} />
+                    <Route path="users" element={<UserManager />} />
+                    <Route path="*" element={<Navigate to="dashboard" replace />} />
+                  </Route>
 
-            <Footer />
-          </Box>
-      </AuthProvider>
+                  {/* ===== FALLBACK ===== */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </main>
+
+              <Footer />
+            </Box>
+        </AuthProvider>
+      </ChatProvider>
     </WebSocketProvider>
   );
 }

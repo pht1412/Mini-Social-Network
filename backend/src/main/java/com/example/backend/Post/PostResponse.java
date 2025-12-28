@@ -21,5 +21,7 @@ public class PostResponse {
     private List<MediaResponse> media;
     private Long likeCount;
     private Long commentCount;
+    private Long shareCount;
     private boolean isLikedByCurrentUser;
+    private PostResponse originalPost;
 }
