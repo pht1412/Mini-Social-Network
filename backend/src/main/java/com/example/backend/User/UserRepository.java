@@ -1,6 +1,9 @@
 package com.example.backend.User;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
 import java.util.Optional;
 import java.util.List;
 
@@ -13,6 +16,9 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     boolean existsByStudentCode(String studentCode);
     //  Đếm số lượng user theo trạng thái Active (True/False)
     long countByActive(Boolean active);
+    // --- MỚI: TÌM KIẾM NGƯỜI DÙNG ---
+    @Query("SELECT u FROM User u WHERE (u.fullName LIKE %:query% OR u.studentCode LIKE %:query%) AND u.active = true")
+    List<User> searchUsers(@Param("query") String query);
 
     List<User> findByRoleIn(List<String> roles);
 

@@ -1,5 +1,5 @@
 import { Box } from '@mui/material';
-import { Routes, Route, Navigate, Outlet } from 'react-router-dom'; // Bỏ import BrowserRouter
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import type { JSX } from 'react';
 
 import Header from './components/layout/Header';
@@ -7,7 +7,9 @@ import Footer from './components/layout/Footer';
 import { AdminLayout } from './components/layout/AdminLayout';
 
 import HomePage from './pages/HomePage';
-import Profile from './pages/Profile';
+// ⭐️ THAY ĐỔI QUAN TRỌNG: Dùng ProfilePage mới thay vì Profile cũ
+import ProfilePage from './pages/Profile'; 
+
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 
@@ -29,7 +31,6 @@ const PrivateRoute = ({ children }: { children: JSX.Element }) => {
 /* ================= APP ================= */
 function App() {
   return (
-    // AuthProvider sẽ nằm trong BrowserRouter của main.tsx
     <WebSocketProvider>
       <ChatProvider>
         <AuthProvider>
@@ -51,25 +52,28 @@ function App() {
                   <Route path="/register" element={<Register />} />
 
                   {/* ===== PROTECTED USER ROUTES ===== */}
+                  
+                  {/* Trường hợp 1: Xem Profile của chính mình */}
                   <Route
                     path="/profile"
                     element={
                       <PrivateRoute>
-                        <Profile />
+                        <ProfilePage />
+                      </PrivateRoute>
+                    }
+                  />
+
+                  {/* Trường hợp 2: Xem Profile người khác */}
+                  <Route
+                    path="/profile/:userId"
+                    element={
+                      <PrivateRoute>
+                        <ProfilePage />
                       </PrivateRoute>
                     }
                   />
 
                   <Route path="/posts/:postId" element={<PostDetailPage />} />
-
-                  <Route
-                    path="/profile/:userId"
-                    element={
-                      <PrivateRoute>
-                        <Profile />
-                      </PrivateRoute>
-                    }
-                  />
 
                   {/* ===== ADMIN ROUTES ===== */}
                   <Route

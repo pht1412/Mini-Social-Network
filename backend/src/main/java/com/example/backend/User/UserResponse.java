@@ -18,6 +18,7 @@ public class UserResponse {
     private String className;
     private String role;
     private String avatarUrl;
+    private String coverPhotoUrl;
     private String bio;
     private Boolean active;
     private LocalDateTime createdAt;

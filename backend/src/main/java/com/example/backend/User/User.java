@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 @Table(name = "users")
 @Data
 public class User {
+    // ... (Giữ nguyên các trường cũ: id, studentCode, email, password...)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -17,8 +18,7 @@ public class User {
 
     @Column(length = 100, unique = true)
     private String email;
-
-    // Map cột password_hash trong SQL vào biến password trong Java
+    
     @Column(name = "password_hash", length = 255)
     private String password;
 
@@ -29,12 +29,17 @@ public class User {
     private String className;
 
     @Column(length = 50)
-    private String role; // "STUDENT", "ADMIN"
+    private String role; 
 
-    @Column(name = "avatar_url", length = 50)
+    // --- CẬP NHẬT: ẢNH ĐẠI DIỆN ---
+    @Column(name = "avatar_url", length = 255) // Tăng độ dài để chứa đường dẫn file
     private String avatarUrl;
 
-    @Column(columnDefinition = "nvarchar(50)")
+    // --- MỚI: THÊM ẢNH BÌA (BACKGROUND) ---
+    @Column(name = "cover_photo_url", length = 255)
+    private String coverPhotoUrl;
+
+    @Column(columnDefinition = "nvarchar(500)") // Tăng độ dài Bio cho thoải mái
     private String bio;
 
     private Boolean active;
@@ -52,9 +57,7 @@ public class User {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
-        if (active == null)
-            active = false;
-        if (role == null)
-            role = "STUDENT";
+        if (active == null) active = false;
+        if (role == null) role = "STUDENT";
     }
 }

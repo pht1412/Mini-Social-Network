@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import axiosClient from '../../api/axiosClient';
 
-
 interface Props { 
   targetUserId: number; 
   currentUserId: number; 
-  className?: string; // Để có thể custom style từ bên ngoài nếu cần
+  className?: string; 
 }
 
 const FriendButton: React.FC<Props> = ({ targetUserId, currentUserId, className }) => {
   const [status, setStatus] = useState<string>('NONE');
   const [actionUserId, setActionUserId] = useState<number | null>(null);
-  const [isHovering, setIsHovering] = useState(false); // State để xử lý hover
+  const [isHovering, setIsHovering] = useState(false);
 
   useEffect(() => {
     const checkStatus = async () => {
@@ -25,7 +24,6 @@ const FriendButton: React.FC<Props> = ({ targetUserId, currentUserId, className 
   }, [targetUserId]);
 
   const handleAction = async (action: 'add' | 'accept' | 'remove') => {
-    // Thêm confirm để tránh bấm nhầm khi hủy kết bạn
     if (action === 'remove' && status === 'ACCEPTED') {
        if (!window.confirm("Bạn có chắc chắn muốn hủy kết bạn không?")) return;
     }
@@ -44,14 +42,23 @@ const FriendButton: React.FC<Props> = ({ targetUserId, currentUserId, className 
     } catch(e) { console.error(e); }
   };
 
-  const baseStyle = { 
-    padding: '8px 12px', borderRadius: '8px', border: 'none', 
-    fontWeight: '600', cursor: 'pointer', fontSize: '13px', 
-    transition: 'all 0.2s', width: '100%',
-    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px'
+  // --- STYLE ĐÃ ĐƯỢC TỐI ƯU CỐ ĐỊNH KÍCH THƯỚC ---
+  const baseStyle: React.CSSProperties = { 
+    padding: '8px 4px', // Giảm padding ngang một chút để chữ không bị tràn nút 120px
+    borderRadius: '6px', 
+    border: 'none', 
+    fontWeight: '600', 
+    cursor: 'pointer', 
+    fontSize: '13px', 
+    transition: 'all 0.2s', 
+    width: '100%', // Sẽ chiếm trọn 120px của container cha
+    height: '36px', // Cố định chiều cao cho đồng đều
+    display: 'flex', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    gap: '4px'
   };
   
-  // 1. TRƯỜNG HỢP ĐÃ LÀ BẠN BÈ (Sửa lại logic hiển thị)
   if (status === 'ACCEPTED') {
     return (
       <button 
@@ -60,39 +67,35 @@ const FriendButton: React.FC<Props> = ({ targetUserId, currentUserId, className 
         onMouseLeave={() => setIsHovering(false)}
         style={{
           ...baseStyle, 
-          background: isHovering ? '#ffebee' : '#e4e6eb', // Hover nền đỏ nhạt
-          color: isHovering ? '#d32f2f' : 'black'        // Hover chữ đỏ đậm
+          background: isHovering ? '#ffebee' : '#e4e6eb', 
+          color: isHovering ? '#d32f2f' : '#050505'
         }}
         className={className}
       >
-        {isHovering ? '❌ Hủy kết bạn' : '✔ Bạn bè'}
+        {isHovering ? 'Hủy' : '✔ Bạn bè'}
       </button>
     );
   }
 
-  // 2. TRƯỜNG HỢP ĐANG CHỜ (PENDING)
   if (status === 'PENDING') {
     if (actionUserId === currentUserId) {
-      // Mình gửi đi -> Nút Hủy lời mời
       return (
-        <button onClick={() => handleAction('remove')} style={{...baseStyle, background: '#e4e6eb', color: '#65676b'}} className={className}>
+        <button onClick={() => handleAction('remove')} style={{...baseStyle, background: '#e4e6eb', color: '#050505'}} className={className}>
            Hủy lời mời
         </button>
       );
     } 
-    // Người ta gửi đến -> Nút Chấp nhận
     return (
-      <div style={{display:'flex', gap:'8px', width: '100%'}}>
-        <button onClick={() => handleAction('accept')} style={{...baseStyle, background: '#1877F2', color: 'white', flex: 1}}>Chấp nhận</button>
-        <button onClick={() => handleAction('remove')} style={{...baseStyle, background: '#e4e6eb', color: 'black', flex: 1}}>Xóa</button>
+      <div style={{display:'flex', gap:'4px', width: '100%'}}>
+        <button onClick={() => handleAction('accept')} style={{...baseStyle, background: '#1877F2', color: 'white', flex: 1}}>Nhận</button>
+        <button onClick={() => handleAction('remove')} style={{...baseStyle, background: '#e4e6eb', color: '#050505', flex: 1}}>Xóa</button>
       </div>
     );
   }
 
-  // 3. TRƯỜNG HỢP CHƯA KẾT BẠN
   return (
     <button onClick={() => handleAction('add')} style={{...baseStyle, background: '#e7f3ff', color: '#1877F2'}} className={className}>
-      + Thêm bạn bè
+      + Thêm bạn
     </button>
   );
 };

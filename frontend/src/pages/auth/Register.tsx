@@ -1,121 +1,51 @@
 import React, { useState } from 'react';
 import api from '../../api/api';
-import { useNavigate, Link } from 'react-router-dom';
-
-// Import CSS đã tối ưu
-import '../../assets/css/regis.css';
+import { useNavigate } from 'react-router-dom';
+import '../../assets/css/login.css';
 
 const Register: React.FC = () => {
-  // State quản lý Role đang chọn (Mặc định là STUDENT)
   const [role, setRole] = useState<'STUDENT' | 'TEACHER'>('STUDENT');
-  
-  const [formData, setFormData] = useState({
-    studentCode: '', fullName: '', email: '', password: '', className: ''
-  });
-  
+  const [formData, setFormData] = useState({ studentCode: '', fullName: '', email: '', password: '', className: '' });
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     try {
-      // Gửi role kèm theo data form
-      const payload = {
-        ...formData,
-        role: role // ⭐️ Gửi role về backend
-      };
-
-      await api.post('/api/auth/register', payload);
-      alert("Đăng ký thành công! Vui lòng chờ Admin duyệt.");
+      await api.post('/api/auth/register', { ...formData, role });
+      alert("Đăng ký thành công! Chờ Admin duyệt.");
       navigate('/login');
     } catch (error: any) {
-      const msg = error.response?.data || "Lỗi đăng ký";
-      alert(typeof msg === 'string' ? msg : JSON.stringify(msg));
-    } finally {
-      setLoading(false);
+      alert(error.response?.data || "Lỗi đăng ký");
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({...formData, [e.target.name]: e.target.value});
-  }
-
   return (
     <div className="auth-wrapper">
-      <div className="auth-card">
-        <h2 className="auth-title">Tạo tài khoản mới</h2>
-        <p className="auth-subtitle">Bạn tham gia với tư cách là?</p>
+      <div className="auth-card" style={{ maxWidth: '432px' }}>
+        <h2 style={{ fontSize: '32px', marginBottom: '8px' }}>Đăng ký</h2>
+        <p style={{ color: '#606770', marginBottom: '20px' }}>Nhanh chóng và dễ dàng.</p>
+        <div style={{ borderBottom: '1px solid #dadde1', marginBottom: '15px' }}></div>
         
-        {/* ⭐️ ROLE SWITCHER UI */}
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '25px' }}>
-            <button 
-                type="button"
-                className="btn-primary"
-                onClick={() => setRole('STUDENT')}
-                style={{ 
-                    background: role === 'STUDENT' ? undefined : '#E5E7EB',
-                    color: role === 'STUDENT' ? 'white' : '#374151',
-                    boxShadow: 'none', padding: '10px'
-                }}
-            >
-                Học sinh
-            </button>
-            <button 
-                type="button"
-                className="btn-primary"
-                onClick={() => setRole('TEACHER')}
-                style={{ 
-                    background: role === 'TEACHER' ? undefined : '#E5E7EB',
-                    color: role === 'TEACHER' ? 'white' : '#374151',
-                    boxShadow: 'none', padding: '10px'
-                }}
-            >
-                Giảng viên
-            </button>
-        </div>
-
         <form onSubmit={handleRegister}>
-          <div className="form-group">
-            <input name="fullName" className="form-input" placeholder="Họ và tên đầy đủ" onChange={handleChange} required />
-          </div>
+          <input name="fullName" className="form-input" placeholder="Họ tên" onChange={(e) => setFormData({...formData, fullName: e.target.value})} required />
           
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-             <div className="form-group">
-                {/* ⭐️ Thay đổi Placeholder theo Role */}
-                <input 
-                    name="studentCode" 
-                    className="form-input" 
-                    placeholder={role === 'STUDENT' ? "Mã Sinh viên" : "Mã Giảng viên"} 
-                    onChange={handleChange} 
-                    required 
-                />
-             </div>
-             
-             {/* ⭐️ Chỉ hiện ô nhập Lớp nếu là STUDENT */}
-             {role === 'STUDENT' && (
-                 <div className="form-group">
-                    <input name="className" className="form-input" placeholder="Lớp (VD: KTPM01)" onChange={handleChange} />
-                 </div>
-             )}
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
+            <label style={{ flex: 1, border: '1px solid #dddfe2', padding: '10px', borderRadius: '6px', display: 'flex', justifyContent: 'space-between' }}>
+              Sinh viên <input type="radio" name="role" checked={role === 'STUDENT'} onChange={() => setRole('STUDENT')} />
+            </label>
+            <label style={{ flex: 1, border: '1px solid #dddfe2', padding: '10px', borderRadius: '6px', display: 'flex', justifyContent: 'space-between' }}>
+              Giảng viên <input type="radio" name="role" checked={role === 'TEACHER'} onChange={() => setRole('TEACHER')} />
+            </label>
           </div>
 
-          <div className="form-group">
-            <input name="email" type="email" className="form-input" placeholder="Địa chỉ Email" onChange={handleChange} required />
-          </div>
+          <input name="studentCode" className="form-input" placeholder={role === 'STUDENT' ? "Mã Sinh viên" : "Mã Giảng viên"} onChange={(e) => setFormData({...formData, studentCode: e.target.value})} required />
+          {role === 'STUDENT' && <input name="className" className="form-input" placeholder="Lớp (VD: KTPM01)" onChange={(e) => setFormData({...formData, className: e.target.value})} />}
+          <input name="email" className="form-input" placeholder="Email" onChange={(e) => setFormData({...formData, email: e.target.value})} required />
+          <input name="password" type="password" className="form-input" placeholder="Mật khẩu mới" onChange={(e) => setFormData({...formData, password: e.target.value})} required />
           
-          <div className="form-group">
-            <input name="password" type="password" className="form-input" placeholder="Mật khẩu" onChange={handleChange} required />
-          </div>
-          
-          <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? "Đang xử lý..." : `Đăng ký với vai trò là ${role === 'STUDENT' ? 'Sinh viên' : 'Giảng viên'}`}
-          </button>
+          <p style={{ fontSize: '11px', color: '#777', margin: '15px 0' }}>Bằng cách nhấp vào Đăng ký, bạn đồng ý với Điều khoản của khoa.</p>
+          <button type="submit" className="btn-register-new" style={{ width: '200px', display: 'block', margin: '0 auto' }}>Đăng ký</button>
         </form>
-
-        <div className="auth-footer">
-          Đã có tài khoản? <Link to="/login" className="auth-link">Đăng nhập ngay</Link>
-        </div>
       </div>
     </div>
   );

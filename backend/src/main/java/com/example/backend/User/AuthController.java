@@ -4,8 +4,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import org.springframework.http.MediaType;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -52,12 +56,57 @@ public class AuthController {
         }
     }
 
+
+    // API phục vụ thanh tìm kiếm trên Header
+    @GetMapping("/search")
+    public ResponseEntity<List<UserResponse>> searchUsers(@RequestParam("name") String query) {
+        if (query == null || query.trim().isEmpty()) {
+            return ResponseEntity.ok(List.of());
+        }
+        return ResponseEntity.ok(authService.searchUsers(query));
+    }
+    // --- CẬP NHẬT: LẤY PROFILE ĐẦY ĐỦ (BAO GỒM ẢNH BÌA) ---
     @GetMapping("/profile")
     public ResponseEntity<?> getProfile() {
         String studentCode = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByStudentCode(studentCode)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        user.setPassword(null);
-        return ResponseEntity.ok(user);
+        
+        // Trả về DTO thay vì Entity để an toàn và đầy đủ
+        UserResponse res = UserResponse.builder()
+            .id(user.getId())
+            .studentCode(user.getStudentCode())
+            .fullName(user.getFullName())
+            .avatarUrl(user.getAvatarUrl())
+            .coverPhotoUrl(user.getCoverPhotoUrl()) // Mới
+            .bio(user.getBio())
+            .className(user.getClassName())
+            .role(user.getRole())
+            .build();
+            
+        return ResponseEntity.ok(res);
+    }
+
+    // --- MỚI: API CẬP NHẬT THÔNG TIN & ẢNH ---
+    // Dùng @RequestParam để nhận từng trường trong FormData
+    @PutMapping(value = "/profile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> updateProfile(
+            @RequestParam(value = "fullName", required = false) String fullName,
+            @RequestParam(value = "bio", required = false) String bio,
+            @RequestParam(value = "className", required = false) String className,
+            @RequestParam(value = "avatar", required = false) MultipartFile avatar,
+            @RequestParam(value = "cover", required = false) MultipartFile cover
+    ) {
+        try {
+            // Lấy user hiện tại từ Token
+            String studentCode = SecurityContextHolder.getContext().getAuthentication().getName();
+            
+            User updatedUser = authService.updateProfile(studentCode, fullName, bio, className, avatar, cover);
+            
+            return ResponseEntity.ok(updatedUser);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body("Lỗi cập nhật: " + e.getMessage());
+        }
     }
 }

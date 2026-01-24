@@ -1,79 +1,57 @@
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
-
+import { Box, List, ListItemButton, ListItemIcon, ListItemText, Avatar, Divider, Typography } from '@mui/material';
 import { 
-  Box, List, ListItem, ListItemButton, ListItemIcon, 
-  ListItemText, Avatar, Divider, Typography, Paper
-} from '@mui/material';
+  People as PeopleIcon, 
+  Groups as GroupsIcon, 
+  History as HistoryIcon, 
+  Event as EventIcon,
+  Bookmark as BookmarkIcon
+} from '@mui/icons-material';
+import type { User } from '../types/index';
 
-// Import Icons
-import PeopleIcon from '@mui/icons-material/People';
-import GroupsIcon from '@mui/icons-material/Groups';
-import HistoryIcon from '@mui/icons-material/History';
-import EventIcon from '@mui/icons-material/Event';
+interface LeftSidebarProps {
+  user: User | null;
+}
 
-// Mock data cho người dùng đang đăng nhập
-const currentUser = {
-  id: "lehonphat",
-  name: "Lê Hồng Phát",
-  avatarUrl: "https://placehold.co/40x40/EFEFEF/333?text=LHP",
-};
-
-// Danh sách các tác vụ
 const menuItems = [
-    { text: 'Bạn bè', icon: <PeopleIcon />, path: '/friends' },
-    { text: 'Nhóm', icon: <GroupsIcon />, path: '/groups' },
-    { text: 'Kỷ niệm', icon: <HistoryIcon />, path: '/history' },
-    { text: 'Sự kiện', icon: <EventIcon />, path: '/events' },
-  ];
+    { text: 'Bạn bè', icon: <PeopleIcon sx={{ color: '#1877F2' }} />, path: '/friends' },
+    { text: 'Nhóm', icon: <GroupsIcon sx={{ color: '#2ABBA7' }} />, path: '/groups' },
+    { text: 'Kỷ niệm', icon: <HistoryIcon sx={{ color: '#1877F2' }} />, path: '/history' },
+    { text: 'Sự kiện', icon: <EventIcon sx={{ color: '#F35E7A' }} />, path: '/events' },
+    { text: 'Đã lưu', icon: <BookmarkIcon sx={{ color: '#9360F7' }} />, path: '/saved' },
+];
 
-export default function LeftSidebar() {
+export default function LeftSidebar({ user }: LeftSidebarProps) {
   return (
-    // Box này sẽ 'dính' lại khi cuộn
-    <Box sx={{ 
-      position: 'sticky', 
-      // 64px (Header) + 24px (Container mt) = 88px
-      top: (theme) => `calc(${theme.mixins.toolbar.minHeight}px + ${theme.spacing(3)})`,
-    }}>
-      <Paper elevation={0} sx={{ border: '1px solid #E0E0E0', p: 1 }}>
-        <List component="nav" disablePadding>
-          {/* Link đến trang cá nhân */}
-          <ListItemButton 
-          component={RouterLink}
-          to={`/profile/${currentUser.id}`}
-          sx={{ borderRadius: 1.5, mb: 1 }}
-        >            
-        <ListItemIcon>
-              <Avatar 
-                src={currentUser.avatarUrl} 
-                alt={currentUser.name} 
-                sx={{ width: 32, height: 32 }}
-              />
-            </ListItemIcon>
-            <ListItemText 
-              primary={currentUser.name} 
-              primaryTypographyProps={{ fontWeight: 'bold' }} 
+    <Box sx={{ position: 'sticky', top: '76px', height: 'calc(100vh - 76px)', overflowY: 'auto', pr: 1 }}>
+      <List component="nav" sx={{ p: 0 }}>
+        {/* THÔNG TIN USER THẬT */}
+        <ListItemButton component={RouterLink} to={`/profile/${user?.id}`} sx={{ borderRadius: 2, mb: 0.5 }}>            
+          <ListItemIcon>
+            <Avatar 
+              src={user?.avatarUrl || `https://ui-avatars.com/api/?name=${user?.fullName}`} 
+              sx={{ width: 36, height: 36 }} 
             />
-          </ListItemButton>
+          </ListItemIcon>
+          <ListItemText 
+            primary={user?.fullName || 'Người dùng'} 
+            primaryTypographyProps={{ fontWeight: 600, fontSize: '15px' }} 
+          />
+        </ListItemButton>
 
-          {/* Các menu tác vụ */}
-          {menuItems.map((item) => (
-            <ListItemButton key={item.text} sx={{ borderRadius: 1.5 }}>
-              <ListItemIcon>
-                {/* Dùng màu primary cho icon */}
-                {React.cloneElement(item.icon, { color: 'primary' })}
-              </ListItemIcon>
-              <ListItemText primary={item.text} />
-            </ListItemButton>
-          ))}
-          
-          <Divider sx={{ my: 1 }} />
-          
-          <Typography variant="caption" color="text.secondary" sx={{ pl: 2 }}>
-            (Các lối tắt khác...)
-          </Typography>
-        </List>
-      </Paper>
+        {menuItems.map((item) => (
+          <ListItemButton key={item.text} sx={{ borderRadius: 2, mb: 0.5 }}>
+            <ListItemIcon>{item.icon}</ListItemIcon>
+            <ListItemText primary={item.text} primaryTypographyProps={{ fontWeight: 500, fontSize: '15px' }} />
+          </ListItemButton>
+        ))}
+        
+        <Divider sx={{ my: 1.5, mx: 2 }} />
+        <Typography variant="caption" color="text.secondary" sx={{ pl: 2, fontSize: '12px', display: 'block', lineHeight: 1.5 }}>
+            Quyền riêng tư  · Điều khoản  · Quảng cáo  · Cookie  · Meta © 2025
+        </Typography>
+      </List>
     </Box>
   );
 }

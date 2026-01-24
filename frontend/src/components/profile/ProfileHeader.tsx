@@ -1,34 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Box, Container, Avatar, Typography, Button, IconButton,
-  Menu, MenuItem, Divider, Tabs, Tab, Paper
+  Menu, MenuItem, Divider, Tabs, Tab, Paper, ListItemIcon, CircularProgress
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
 // Import Icons
-import CameraAltIcon from '@mui/icons-material/CameraAlt'; // Icon camera
-import EditIcon from '@mui/icons-material/Edit'; // Icon chỉnh sửa
+import CameraAltIcon from '@mui/icons-material/CameraAlt';
+import EditIcon from '@mui/icons-material/Edit';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
-import PhotoCameraBackIcon from '@mui/icons-material/PhotoCameraBack';
+import ImageIcon from '@mui/icons-material/Image';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
+import DeleteIcon from '@mui/icons-material/Delete';
 import PersonIcon from '@mui/icons-material/Person';
-import ImageIcon from '@mui/icons-material/Image'; // Icon "Chọn ảnh bìa"
-import UploadFileIcon from '@mui/icons-material/UploadFile'; // Icon "Tải ảnh lên"
-import DeleteIcon from '@mui/icons-material/Delete'; // Icon "Gỡ"
 
-
-// Import Modal
+// Import API & Components
+import api from '../../api/api';
+import { useAuth } from '../../context/AuthContext';
 import PostViewModal from './PostViewModal';
-
-// Mock data cho trang cá nhân
-const mockUser = {
-  name: "Lê Hồng Phát", // Tên từ ảnh
-  friendCount: 275,
-  avatarUrl: "https://placehold.co/168x168/EFEFEF/333?text=AVATAR",
-  coverUrl: "https://placehold.co/1000x350/CCCCCC/333?text=COVER+IMAGE",
-};
+import EditProfileDialog from './EditProfileDialog'; // Import Dialog mới
 
 // --- Styled Components ---
-// Box chứa ảnh bìa
 const CoverPhoto = styled(Box)(({ theme }) => ({
   height: '350px',
   backgroundSize: 'cover',
@@ -36,9 +28,9 @@ const CoverPhoto = styled(Box)(({ theme }) => ({
   borderRadius: '0 0 8px 8px',
   cursor: 'pointer',
   position: 'relative',
+  backgroundColor: '#f0f2f5', // Màu nền backup nếu chưa có ảnh
 }));
 
-// Avatar (nằm đè lên ảnh bìa)
 const ProfileAvatar = styled(Avatar)(({ theme }) => ({
   width: 168,
   height: 168,
@@ -47,200 +39,197 @@ const ProfileAvatar = styled(Avatar)(({ theme }) => ({
   bottom: -32,
   left: 32,
 }));
-// -------------------------
+
+// Helper xử lý URL ảnh thủ công (Local)
+const getImageUrl = (url: string | undefined) => {
+  if (!url) return undefined;
+  if (url.startsWith('http')) return url; // Đã là link online
+  return `http://localhost:8080${url}`; // Link local từ backend trả về
+};
 
 export default function ProfileHeader() {
-  // State cho Menu của Avatar
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const menuOpen = Boolean(anchorEl);
-  // State cho Menu của Background
-  const [coverMenuAnchorEl, setCoverMenuAnchorEl] = useState<null | HTMLElement>(null);
-  const coverMenuOpen = Boolean(coverMenuAnchorEl);
+  const { user, login } = useAuth(); // Lấy user từ context (hoặc fetch lại)
+  const [profileUser, setProfileUser] = useState(user);
 
+  // Refresh data khi user context thay đổi
+  useEffect(() => { setProfileUser(user); }, [user]);
 
-  // State cho Modal xem bài đăng
-  const [modalOpen, setModalOpen] = useState(false);
-  // TODO: Thêm state để biết xem post nào (avatar hay cover)
+  // State Menu
+  const [avatarMenuAnchor, setAvatarMenuAnchor] = useState<null | HTMLElement>(null);
+  const [coverMenuAnchor, setCoverMenuAnchor] = useState<null | HTMLElement>(null);
+  
+  // State Modals
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [postViewOpen, setPostViewOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
-  // State cho Tab Navbar
-  const [currentTab, setCurrentTab] = useState(0);
+  // Refs input file ẩn
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
 
-  const handleAvatarClick = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
+  // --- HANDLERS MENU ---
+  const handleAvatarClick = (e: React.MouseEvent<HTMLElement>) => setAvatarMenuAnchor(e.currentTarget);
+  const handleCoverClick = (e: React.MouseEvent<HTMLElement>) => setCoverMenuAnchor(e.currentTarget);
+  const closeMenus = () => { setAvatarMenuAnchor(null); setCoverMenuAnchor(null); };
+
+  // --- LOGIC UPLOAD ẢNH (QUAN TRỌNG) ---
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'cover') => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    closeMenus();
+
+    try {
+      const formData = new FormData();
+      // Backend của chúng ta nhận 'avatar' hoặc 'cover'
+      formData.append(type, file); 
+
+      const res = await api.put('/api/auth/profile', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      // Cập nhật UI ngay lập tức
+      setProfileUser(res.data);
+      // Nếu muốn cập nhật global user context: login(res.data.token) (tuỳ logic auth của bạn)
+      
+    } catch (error) {
+      console.error("Upload lỗi:", error);
+      alert("Không thể tải ảnh lên. Vui lòng thử lại.");
+    } finally {
+      setIsUploading(false);
+      // Reset input để chọn lại file cũ được
+      if (event.target) event.target.value = '';
+    }
   };
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
 
-  const handleCoverMenuClick = (event: React.MouseEvent<HTMLElement>) => {
-    setCoverMenuAnchorEl(event.currentTarget);
-  };
-  const handleCoverMenuClose = () => {
-    setCoverMenuAnchorEl(null);
-  };
-
-  // Mở Modal (dùng chung cho cả avatar và cover)
-  const handleViewPost = () => {
-    setModalOpen(true);
-    handleMenuClose();
-  };
-
-  const handleCloseModal = () => {
-    setModalOpen(false);
-  };
-
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setCurrentTab(newValue);
+  const handleRemovePhoto = async (type: 'avatar' | 'cover') => {
+     // TODO: Gọi API xóa ảnh (Cần backend hỗ trợ set null). 
+     // Tạm thời chưa triển khai backend nên để placeholder
+     alert("Chức năng đang phát triển ở Backend");
+     closeMenus();
   };
 
   return (
     <>
-      <Paper 
-        elevation={0} 
-        sx={{ 
-          bgcolor: 'background.paper', 
-          mb: 3, 
-          border: '1px solid #E0E0E0',
-          borderTop: 'none', // Header chính đã có viền
-        }}
-      >
-        {/* 1. ẢNH BÌA VÀ AVATAR */}
+      {/* INPUT ẨN ĐỂ CHỌN FILE */}
+      <input 
+        type="file" hidden accept="image/*" 
+        ref={avatarInputRef} 
+        onChange={(e) => handleFileUpload(e, 'avatar')} 
+      />
+      <input 
+        type="file" hidden accept="image/*" 
+        ref={coverInputRef} 
+        onChange={(e) => handleFileUpload(e, 'cover')} 
+      />
+
+      <Paper elevation={0} sx={{ bgcolor: 'background.paper', mb: 3, border: '1px solid #E0E0E0', borderTop: 'none' }}>
         <Container maxWidth="md">
           <Box sx={{ position: 'relative' }}>
-            {/* 1a. Ảnh bìa */}
-            <CoverPhoto
-              sx={{ backgroundImage: `url(${mockUser.coverUrl})` }}
-            >
+            {/* 1. ẢNH BÌA */}
+            <CoverPhoto sx={{ backgroundImage: `url(${getImageUrl(profileUser?.coverPhotoUrl)})` }}>
+              {/* Nút Ba Chấm / Camera cho Ảnh Bìa */}
               <Button
                 variant="contained"
                 startIcon={<CameraAltIcon />}
+                onClick={handleCoverClick}
                 sx={{
                   position: 'absolute', bottom: 16, right: 16,
-                  bgcolor: 'rgba(255,255,255,0.9)',
-                  color: 'black',
-                  '&:hover': { bgcolor: 'white' }
+                  bgcolor: 'white', color: 'black', fontWeight: 'bold',
+                  '&:hover': { bgcolor: '#f2f2f2' }, textTransform: 'none'
                 }}
-                onClick={handleCoverMenuClick}
               >
-                Chỉnh sửa ảnh bìa
+                {isUploading ? "Đang tải..." : "Thêm ảnh bìa"}
               </Button>
             </CoverPhoto>
 
-            {/* 1b. Avatar */}
-            <ProfileAvatar
-              src={mockUser.avatarUrl}
-              alt={mockUser.name}
-              onClick={handleAvatarClick} // Click Avatar -> Mở Menu
-              sx={{ cursor: 'pointer' }}
-            />
-            
-            {/* Nút camera trên Avatar */}
-            <IconButton
-              onClick={handleAvatarClick}
-              sx={{
-                position: 'absolute',
-                bottom: -20,
-                left: 170,
-                bgcolor: 'action.hover',
-                '&:hover': { bgcolor: 'action.hover' }
-              }}
-            >
-              <CameraAltIcon />
-            </IconButton>
+            {/* 2. AVATAR */}
+            <Box onClick={handleAvatarClick} sx={{ cursor: 'pointer' }}>
+               <ProfileAvatar src={getImageUrl(profileUser?.avatarUrl)} alt={profileUser?.fullName} />
+               {/* Nút Camera tròn cạnh Avatar */}
+               <IconButton
+                 sx={{
+                   position: 'absolute', bottom: -20, left: 160,
+                   bgcolor: '#E4E6E9', p: 1,
+                   '&:hover': { bgcolor: '#D8DADF' }
+                 }}
+               >
+                 <CameraAltIcon sx={{ color: 'black' }} />
+               </IconButton>
+            </Box>
           </Box>
 
-          {/* 2. TÊN, BẠN BÈ, NÚT BẤM */}
-          <Box sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-end',
-            pt: 2, // Kéo lên
-            pb: 2,
-            pl: '220px', // Bắt đầu sau Avatar
-            pr: 2,
-            mt: '-16px' // Giảm khoảng cách
-          }}>
-            {/* Tên và số bạn */}
+          {/* 3. THÔNG TIN & NÚT EDIT */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', pt: 2, pb: 2, pl: '220px', pr: 2, mt: '-16px' }}>
             <Box>
-              <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                {mockUser.name}
-              </Typography>
+              <Typography variant="h4" sx={{ fontWeight: 'bold' }}>{profileUser?.fullName}</Typography>
               <Typography variant="body1" color="text.secondary">
-                {mockUser.friendCount} bạn bè
+                 {/* Logic đếm bạn bè cần API riêng, tạm để mockup hoặc lấy từ user */}
+                 0 bạn bè 
               </Typography>
             </Box>
 
-            {/* Các nút (Đã loại bỏ "Thêm vào tin") */}
-            <Box>
-              <Button variant="contained" startIcon={<EditIcon />} sx={{ mr: 1 }}>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button 
+                variant="contained" 
+                startIcon={<EditIcon />} 
+                onClick={() => setEditDialogOpen(true)}
+                sx={{ bgcolor: '#1877F2', fontWeight: 'bold', textTransform: 'none' }}
+              >
                 Chỉnh sửa trang cá nhân
-              </Button>
-              <Button variant="contained" sx={{ bgcolor: 'action.hover', color: 'text.primary', minWidth: 0, p: 1 }}>
-                <MoreHorizIcon />
               </Button>
             </Box>
           </Box>
 
           <Divider />
-
-          {/* 3. THANH NAVBAR (Đã giản lược) */}
+          
+          {/* TABS */}
           <Box sx={{ pl: '204px' }}>
-            <Tabs value={currentTab} onChange={handleTabChange}>
-              <Tab label="Bài viết" />
-              <Tab label="Giới thiệu" />
-              <Tab label="Bạn bè" />
+            <Tabs value={0}>
+              <Tab label="Bài viết" sx={{ textTransform: 'none', fontWeight: 600 }} />
+              <Tab label="Giới thiệu" sx={{ textTransform: 'none', fontWeight: 600 }} />
+              <Tab label="Bạn bè" sx={{ textTransform: 'none', fontWeight: 600 }} />
             </Tabs>
           </Box>
         </Container>
       </Paper>
 
-      {/* 4. MENU KHI ẤN VÀO AVATAR (Dropdown) */}
-      <Menu
-        anchorEl={anchorEl}
-        open={menuOpen}
-        onClose={handleMenuClose}
-      >
-        {/* Yêu cầu của bạn: "Xem ảnh đại diện" -> Mở Modal */}
-        <MenuItem onClick={handleViewPost}>
-          <PersonIcon sx={{ mr: 1.5 }} />
-          Xem ảnh đại diện
+      {/* --- MENUS --- */}
+      
+      {/* MENU AVATAR */}
+      <Menu anchorEl={avatarMenuAnchor} open={Boolean(avatarMenuAnchor)} onClose={closeMenus}>
+        <MenuItem onClick={() => { setPostViewOpen(true); closeMenus(); }}>
+          <ListItemIcon><PersonIcon /></ListItemIcon> Xem ảnh đại diện
         </MenuItem>
-        
-        {/* Yêu cầu của bạn: "Chọn ảnh đại diện" -> Không làm gì */}
-        <MenuItem onClick={handleMenuClose}>
-          <PhotoCameraBackIcon sx={{ mr: 1.5 }} />
-          Chọn ảnh đại diện
+        <MenuItem onClick={() => avatarInputRef.current?.click()}>
+          <ListItemIcon><UploadFileIcon /></ListItemIcon> Chọn ảnh đại diện
         </MenuItem>
       </Menu>
 
-      {/* ⭐️ THÊM MENU MỚI KHI ẤN VÀO "CHỈNH SỬA ẢNH BÌA" */}
-      <Menu
-        anchorEl={coverMenuAnchorEl}
-        open={coverMenuOpen}
-        onClose={handleCoverMenuClose}
-      >
-        {/* Theo yêu cầu: 'Chọn ảnh bìa' */}
-        <MenuItem onClick={handleCoverMenuClose}>
-          <ImageIcon sx={{ mr: 1.5 }} />
-          Chọn ảnh bìa
+      {/* MENU COVER */}
+      <Menu anchorEl={coverMenuAnchor} open={Boolean(coverMenuAnchor)} onClose={closeMenus}>
+        <MenuItem onClick={() => coverInputRef.current?.click()}>
+          <ListItemIcon><UploadFileIcon /></ListItemIcon> Tải ảnh lên
         </MenuItem>
-        
-        {/* Theo yêu cầu: 'Tải ảnh lên' */}
-        <MenuItem onClick={handleCoverMenuClose}>
-          <UploadFileIcon sx={{ mr: 1.5 }} />
-          Tải ảnh lên
-        </MenuItem>
-        <Divider />
-        
-        {/* Theo yêu cầu: 'Gỡ' */}
-        <MenuItem onClick={handleCoverMenuClose} sx={{ color: 'error.main' }}>
-          <DeleteIcon sx={{ mr: 1.5 }} />
-          Gỡ
+        <MenuItem onClick={() => handleRemovePhoto('cover')} sx={{ color: 'error.main' }}>
+          <ListItemIcon><DeleteIcon color="error" /></ListItemIcon> Gỡ
         </MenuItem>
       </Menu>
 
-      {/* 5. MODAL (POPUP) ĐỂ XEM BÀI ĐĂNG */}
-      <PostViewModal open={modalOpen} onClose={handleCloseModal} />
+      {/* --- DIALOGS --- */}
+      <EditProfileDialog 
+        open={editDialogOpen} 
+        onClose={() => setEditDialogOpen(false)} 
+        currentUser={profileUser} 
+        onUpdateSuccess={(updated) => setProfileUser(updated)}
+      />
+      
+      <PostViewModal 
+        open={postViewOpen} 
+        onClose={() => setPostViewOpen(false)} 
+        // post={...} // Truyền ảnh avatar vào đây nếu muốn xem
+      />
     </>
   );
 }

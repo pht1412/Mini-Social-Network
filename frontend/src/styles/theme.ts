@@ -1,40 +1,27 @@
 // src/styles/theme.ts
-import { createTheme } from '@mui/material/styles';
-import { red } from '@mui/material/colors';
-
-// -- BẮT ĐẦU VÙNG TÙY CHỈNH CỦA BẠN --
-
-// 1. ĐỊNH NGHĨA MÀU CHÍNH
-// Hãy thay đổi các mã màu HEX này theo ý bạn.
-// Bạn có thể dùng các công cụ như 'coolors.co' để chọn
-const PRIMARY_COLOR = '#1976D2';   // Xanh dương (Màu hiện tại của Header)
-const SECONDARY_COLOR = '#ED6C02'; // Cam (Màu hiện tại của nút Đăng ký)
-const SUCCESS_COLOR = '#2e7d32';   // Xanh lá
-const ERROR_COLOR = '#d32f2f';     // Đỏ
-const WARNING_COLOR = '#ed6c02';   // Vàng/Cam
-const INFO_COLOR = '#0288d1';      // Xanh thông tin
-
-// 2. ĐỊNH NGHĨA MÀU NỀN
-// Rất quan trọng cho một giao diện "sạch"
-const BACKGROUND_DEFAULT = '#f4f6f8'; // Màu nền xám rất nhạt (cho body)
-const BACKGROUND_PAPER = '#FFFFFF';   // Màu nền trắng tinh (cho Card, Paper...)
-
-// 3. ĐỊNH NGHĨA FONT VÀ CỠ CHỮ
-const FONT_FAMILY = 'Roboto, sans-serif';
-const FONT_SIZE_DEFAULT = 14; // Cỡ chữ mặc định (14px)
-
-// 4. ĐỊNH NGHĨA ĐỘ BO GÓC
-const BORDER_RADIUS_DEFAULT = 8; // Bo góc 8px
-
-// -- KẾT THÚC VÙNG TÙY CHỈNH --
-
+import { createTheme, alpha } from '@mui/material/styles';
 
 // ----------------------------------------------------------------------
-// 🚀 TẠO THEME
+// 1. ĐỊNH NGHĨA BIẾN MÀU CHUẨN FACEBOOK
+// ----------------------------------------------------------------------
+const PRIMARY_COLOR = '#1877F2';      // Xanh Facebook chuẩn
+const SECONDARY_COLOR = '#42b72a';    // Xanh lá (cho nút Tạo tài khoản/Đăng ký)
+const SUCCESS_COLOR = '#2e7d32';   
+const ERROR_COLOR = '#d32f2f';     
+const WARNING_COLOR = '#ed6c02';   
+const INFO_COLOR = '#0288d1';      
+
+const BACKGROUND_DEFAULT = '#F0F2F5'; // Màu nền xám nhạt đặc trưng của FB
+const BACKGROUND_PAPER = '#FFFFFF';   // Trắng tinh cho các Card bài viết
+
+const FONT_FAMILY = 'Segoe UI, Helvetica, Arial, sans-serif'; // Font hệ thống Facebook
+const BORDER_RADIUS_DEFAULT = 8; // Bo góc chuẩn cho các Card bài viết
+
+// ----------------------------------------------------------------------
+// 🚀 TẠO THEME CHI TIẾT
 // ----------------------------------------------------------------------
 
 const theme = createTheme({
-  // 🎨 I. BẢNG MÀU
   palette: {
     mode: 'light',
     primary: {
@@ -60,108 +47,103 @@ const theme = createTheme({
       paper: BACKGROUND_PAPER,
     },
     text: {
-      primary: '#212121',   // Màu chữ đen (nhưng không quá gắt)
-      secondary: '#616161', // Màu chữ xám (cho text phụ, timestamp)
-      disabled: '#BDBDBD',  // Màu chữ bị vô hiệu hóa
+      primary: '#050505',   // Màu chữ đen FB
+      secondary: '#65676B', // Màu chữ xám cho thông tin phụ
+      disabled: '#BDBDBD',
     },
   },
 
-  // 🖋️ II. KIỂU CHỮ
   typography: {
     fontFamily: FONT_FAMILY,
-    htmlFontSize: 16, // Giữ 16px làm gốc (tốt cho accessibility)
-    fontSize: FONT_SIZE_DEFAULT,
-    h1: { fontSize: '2.5rem', fontWeight: 700 },
+    htmlFontSize: 16,
+    fontSize: 14,
+    h1: { fontSize: '2.5rem', fontWeight: 700 }, // Giữ nguyên thông số của bạn
     h2: { fontSize: '2rem', fontWeight: 600 },
     h3: { fontSize: '1.75rem', fontWeight: 600 },
     h4: { fontSize: '1.5rem', fontWeight: 500 },
     h5: { fontSize: '1.25rem', fontWeight: 500 },
     h6: { fontSize: '1rem', fontWeight: 500 },
-    body1: { fontSize: '1rem' }, // 16px
-    body2: { fontSize: '0.875rem' }, // 14px (cỡ chữ mặc định của chúng ta)
+    body1: { fontSize: '1rem' }, 
+    body2: { fontSize: '0.875rem' }, 
     button: {
-      fontWeight: 600, // Làm cho chữ trên nút bấm đậm hơn
-      textTransform: 'none', // ⭐️ Bỏ VIẾT HOA chữ trên nút
+      fontWeight: 600,
+      textTransform: 'none', // Bỏ viết hoa theo style hiện đại
     },
   },
 
-  // 📐 III. HÌNH DẠNG & GIÃN CÁCH
   shape: {
     borderRadius: BORDER_RADIUS_DEFAULT,
   },
-  
-  // (Chúng ta giữ nguyên `spacing` 8px mặc định của MUI)
-  // theme.spacing(1) = 8px
-  // theme.spacing(2) = 16px
 
-  // ✨ IV. GHI ĐÈ STYLE MẶC ĐỊNH
-  // Đây là nơi "tỉ mỉ" phát huy tác dụng
   components: {
-    // Tùy chỉnh cho tất cả <Button>
+    // Tùy chỉnh Button
     MuiButton: {
       styleOverrides: {
         root: {
-          // Áp dụng bóng (shadow) nhẹ cho nút "contained"
-          boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.08)',
+          borderRadius: 6, // Facebook dùng bo góc nút hơi vuông hơn Card một chút
+          padding: '8px 16px',
+          boxShadow: 'none', // FB ít dùng shadow cho nút
           '&:hover': {
-            boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.12)',
+            boxShadow: 'none',
+            backgroundColor: alpha(PRIMARY_COLOR, 0.9),
           }
         },
         containedPrimary: {
-          // Style riêng cho nút <Button variant="contained" color="primary">
-          color: 'white', // Đảm bảo chữ luôn trắng
+          color: 'white',
         },
+        containedSecondary: {
+          color: 'white',
+          backgroundColor: SECONDARY_COLOR,
+          '&:hover': {
+            backgroundColor: '#36a420',
+          }
+        }
       },
     },
 
-    // Tùy chỉnh cho tất cả <Card>
+    // Tùy chỉnh Card (Trái tim của News Feed)
     MuiCard: {
       styleOverrides: {
         root: {
-          // Bỏ box-shadow mặc định của Card, thay bằng viền (border)
-          // Tạo cảm giác "sạch" và "phẳng" hơn
-          border: `1px solid #E0E0E0`,
-          boxShadow: 'none', 
-          // Nếu bạn vẫn thích shadow, hãy dùng:
-          // boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.05)',
+          border: 'none',
+          boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)', // Shadow cực nhẹ chuẩn FB
+          borderRadius: BORDER_RADIUS_DEFAULT,
         },
       },
     },
 
-    // Tùy chỉnh cho tất cả <Input> (TextField)
+    // Tùy chỉnh Input (Giữ lại cấu trúc tỉ mỉ của bạn)
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
-          // Style cho ô input khi không được focus
-          backgroundColor: BACKGROUND_PAPER, // Nền trắng
+          backgroundColor: '#F0F2F5', // Input FB thường có nền xám nhẹ
+          borderRadius: 20, // Bo góc tròn cho các ô Search/Comment
           '& .MuiOutlinedInput-notchedOutline': {
             borderColor: '#E0E0E0',
           },
           '&:hover .MuiOutlinedInput-notchedOutline': {
-            borderColor: PRIMARY_COLOR,
+            borderColor: '#D0D0D0',
           },
-          // Style khi đang focus
           '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
             borderWidth: '1px',
+            borderColor: PRIMARY_COLOR,
           },
         },
       },
     },
     
-    // Tùy chỉnh cho <AppBar> (Header)
+    // Tùy chỉnh Header (AppBar)
     MuiAppBar: {
       styleOverrides: {
         root: {
-          // Bỏ shadow của AppBar, thay bằng đường viền dưới
-          boxShadow: 'none',
-          borderBottom: `1px solid ${alpha(PRIMARY_COLOR, 0.3)}`,
+          backgroundColor: BACKGROUND_PAPER,
+          color: '#050505',
+          boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+          borderBottom: `1px solid ${alpha('#000', 0.1)}`, // Tinh chỉnh lại borderBottom của bạn
         }
       }
     }
   },
 });
-
-// Phải import 'alpha' nếu bạn dùng nó trong 'components'
-import { alpha } from '@mui/material/styles';
 
 export default theme;

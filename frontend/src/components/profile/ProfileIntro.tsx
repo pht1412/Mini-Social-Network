@@ -1,35 +1,56 @@
 import React from 'react';
-import { Paper, Typography, Box, Divider, Button } from '@mui/material';
-import HomeIcon from '@mui/icons-material/Home'; // Icon nơi ở
-import AccessTimeIcon from '@mui/icons-material/AccessTime'; // Icon ngày tham gia
+import { Paper, Typography, Box, Button } from '@mui/material';
+import HomeIcon from '@mui/icons-material/Home';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import InfoIcon from '@mui/icons-material/Info'; // Icon Bio
+import type { User } from '../../types';
 
-// Mock data cho phần giới thiệu
-const mockIntro = {
-  location: "Sống tại Thành phố Hồ Chí Minh",
-  joined: "Tham gia vào tháng 11 2024",
-};
+interface Props {
+  user: User | null;
+  onEditClick: () => void;
+}
 
-export default function ProfileIntro() {
+export default function ProfileIntro({ user, onEditClick }: Props) {
+  if (!user) return null;
+
   return (
-    <Paper 
-      variant="outlined" 
-      sx={{ p: 2, border: '1px solid #E0E0E0', bgcolor: 'background.paper' }}
-    >
-      <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
-        Giới thiệu
-      </Typography>
+    <Paper variant="outlined" sx={{ p: 2, border: 'none', boxShadow: '0 1px 2px rgba(0,0,0,0.1)', borderRadius: 2, bgcolor: 'background.paper' }}>
+      <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>Giới thiệu</Typography>
       
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+      {/* BIO */}
+      {user.bio && (
+        <Typography variant="body1" sx={{ textAlign: 'center', mb: 2 }}>
+          {user.bio}
+        </Typography>
+      )}
+
+      {/* CLASS NAME */}
+      {user.className && (
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+          <InfoIcon color="disabled" sx={{ mr: 1.5 }} />
+          <Typography variant="body2">Học tại <b>{user.className}</b></Typography>
+        </Box>
+      )}
+
+      {/* LOCATION (Giả định hoặc thêm trường sau này) */}
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
         <HomeIcon color="disabled" sx={{ mr: 1.5 }} />
-        <Typography variant="body2">{mockIntro.location}</Typography>
+        <Typography variant="body2">Sống tại <b>Thành phố Hồ Chí Minh</b></Typography>
       </Box>
       
+      {/* JOINED DATE */}
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
         <AccessTimeIcon color="disabled" sx={{ mr: 1.5 }} />
-        <Typography variant="body2">{mockIntro.joined}</Typography>
+        <Typography variant="body2">
+           Tham gia vào {user.createdAt ? new Date(user.createdAt).toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' }) : '...'}
+        </Typography>
       </Box>
       
-      <Button fullWidth variant="contained" sx={{ bgcolor: 'action.hover', color: 'text.primary', '&:hover': { bgcolor: 'action.hover' } }}>
+      <Button 
+        fullWidth variant="contained" 
+        onClick={onEditClick}
+        sx={{ bgcolor: '#E4E6E9', color: 'black', fontWeight: 600, textTransform: 'none', '&:hover': { bgcolor: '#D8DADF' } }}
+      >
         Chỉnh sửa chi tiết
       </Button>
     </Paper>

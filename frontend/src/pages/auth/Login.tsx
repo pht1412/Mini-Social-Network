@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import api from '../../api/api'; 
 import { useAuth } from '../../context/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
-
-// Import CSS đã tối ưu
+import { useNavigate } from 'react-router-dom';
 import '../../assets/css/login.css'; 
 
 const Login: React.FC = () => {
@@ -18,20 +16,11 @@ const Login: React.FC = () => {
     setLoading(true);
     try {
       const res = await api.post('/api/auth/login', { identifier, password });
-      
       const { token, ...userInfo } = res.data;
       login(token, userInfo); 
-      
-      // Chuyển hướng thông minh
-      if (userInfo.role === 'ADMIN') {
-          navigate('/admin/dashboard');
-      } else {
-          navigate('/');
-      }
-      
+      userInfo.role === 'ADMIN' ? navigate('/admin/dashboard') : navigate('/');
     } catch (error: any) {
-      const msg = error.response?.data || "Đăng nhập thất bại";
-      alert(typeof msg === 'string' ? msg : JSON.stringify(msg));
+      alert(error.response?.data || "Đăng nhập thất bại");
     } finally {
       setLoading(false);
     }
@@ -39,38 +28,27 @@ const Login: React.FC = () => {
 
   return (
     <div className="auth-wrapper">
-      <div className="auth-card">
-        <h2 className="auth-title">Chào mừng trở lại</h2>
-        <p className="auth-subtitle">Đăng nhập để kết nối với hệ thống</p>
-        
-        <form onSubmit={handleLogin}>
-          <div className="form-group">
-            <input 
-              className="form-input"
-              type="text" 
-              placeholder="Email hoặc Mã Sinh Viên" 
-              value={identifier} 
-              onChange={(e) => setIdentifier(e.target.value)} 
-              required 
-            />
-          </div>
-          <div className="form-group">
-            <input 
-              className="form-input"
-              type="password" 
-              placeholder="Mật khẩu" 
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
-              required 
-            />
-          </div>
-          <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? "Đang xử lý..." : "Đăng nhập ngay"}
-          </button>
-        </form>
+      <div style={{ textAlign: 'center', maxWidth: '1000px', display: 'flex', alignItems: 'center', gap: '50px' }}>
+        {/* Slogan kiểu Facebook */}
+        <div style={{ textAlign: 'left', width: '500px' }} className="hidden-mobile">
+          <h1 style={{ color: 'var(--fb-blue)', fontSize: '60px', marginBottom: '0' }}>Mini Social</h1>
+          <p style={{ fontSize: '24px', lineHeight: '28px', color: '#1c1e21' }}>
+            Hệ thống giúp bạn kết nối và chia sẻ với mọi người trong khoa.
+          </p>
+        </div>
 
-        <div className="auth-footer">
-          Chưa có tài khoản? <Link to="/register" className="auth-link">Đăng ký ngay</Link>
+        <div className="auth-card">
+          <form onSubmit={handleLogin}>
+            <input className="form-input" type="text" placeholder="Email hoặc Mã Sinh Viên" value={identifier} onChange={(e) => setIdentifier(e.target.value)} required />
+            <input className="form-input" type="password" placeholder="Mật khẩu" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <button type="submit" className="btn-login" disabled={loading}>
+              {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+            </button>
+          </form>
+          <div style={{ borderBottom: '1px solid #dadde1', margin: '20px 0' }}></div>
+          <button className="btn-register-new" onClick={() => navigate('/register')}>
+            Tạo tài khoản mới
+          </button>
         </div>
       </div>
     </div>
