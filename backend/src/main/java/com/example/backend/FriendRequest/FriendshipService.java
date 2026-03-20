@@ -6,12 +6,15 @@ import com.example.backend.User.User;
 import com.example.backend.User.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher; // Import Publisher
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 public class FriendshipService {
@@ -160,5 +163,10 @@ public class FriendshipService {
 
     public List<User> getUserFriends(Integer myId) {
         return friendshipRepository.findAllFriends(myId);
+    }
+    public Page<User> getSuggestedFriends(Integer myId, int page, int size) {
+        // Tạo yêu cầu phân trang
+        Pageable pageable = PageRequest.of(page, size);
+        return userRepository.findSuggestedFriends(myId, pageable);
     }
 }

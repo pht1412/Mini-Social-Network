@@ -21,4 +21,7 @@ public class NotificationDTO {
     private LocalDateTime createdAt;
     private boolean isRead;
     private NotificationType type;
+    // 🟢 MỚI: BỔ SUNG 2 TRƯỜNG NÀY CHO MA THUẬT GIAO DIỆN
+    private String senderAvatarFrame;
+    private String senderNameColor;
 }

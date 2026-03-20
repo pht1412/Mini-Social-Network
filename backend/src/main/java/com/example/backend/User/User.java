@@ -18,7 +18,7 @@ public class User {
 
     @Column(length = 100, unique = true)
     private String email;
-    
+
     @Column(name = "password_hash", length = 255)
     private String password;
 
@@ -29,7 +29,7 @@ public class User {
     private String className;
 
     @Column(length = 50)
-    private String role; 
+    private String role;
 
     // --- CẬP NHẬT: ẢNH ĐẠI DIỆN ---
     @Column(name = "avatar_url", length = 255) // Tăng độ dài để chứa đường dẫn file
@@ -53,11 +53,29 @@ public class User {
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
 
+    @Column(name = "level", nullable = false)
+    private Integer level = 1; // Mặc định level 1
+
+    @Column(name = "exp", nullable = false)
+    private Integer exp = 0; // Mặc định 0 exp
+
+    // 🟢 MỚI: TÁCH RIÊNG ĐIỂM GIAO DỊCH VÀ KHUNG AVATAR
+    @Column(name = "vptl_points", nullable = false)
+    private Integer vptlPoints = 0; // Số dư tài khoản điểm của user
+
+    @Column(name = "current_avatar_frame", length = 255)
+    private String currentAvatarFrame; // Đường dẫn hoặc ID của viền avatar đang dùng
+
+    @Column(name = "current_name_color")
+    private String currentNameColor;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
-        if (active == null) active = false;
-        if (role == null) role = "STUDENT";
+        if (active == null)
+            active = false;
+        if (role == null)
+            role = "STUDENT";
     }
 }

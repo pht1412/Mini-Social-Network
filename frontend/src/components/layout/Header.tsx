@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
+import {
   AppBar, Toolbar, Box, InputBase, Paper, List, ListItem,
-  IconButton, Tooltip, Button, Avatar, Badge, Typography, CircularProgress
+  IconButton, Tooltip, Button, Badge, Typography, CircularProgress
 } from '@mui/material';
 import { styled, alpha } from '@mui/material/styles';
 import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
@@ -9,7 +9,7 @@ import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 // Import Icons
 import SearchIcon from '@mui/icons-material/Search';
 import HomeIcon from '@mui/icons-material/Home';
-import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'; 
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import LogoutIcon from '@mui/icons-material/Logout';
 import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
 
@@ -23,10 +23,15 @@ import MessengerDropdown from '../messenger/MessengerDropdown';
 import { useWebSocket } from '../../context/WebSocketContext';
 import FriendButton from '../friend/FriendButton';
 
+// 🔴 IMPORT COMPONENT AVATAR MA THUẬT
+import AvatarWithFrame from '../AvatarWithFrame';
+import ColoredName from '../ColoredName'; // (Sửa đường dẫn cho đúng từng file)
+
+
 // --- STYLED COMPONENTS (FACEBOOK STYLE) ---
 const Search = styled('div')(({ theme }) => ({
   position: 'relative',
-  borderRadius: '20px', 
+  borderRadius: '20px',
   backgroundColor: '#F0F2F5',
   '&:hover': { backgroundColor: '#E4E6E9' },
   marginLeft: theme.spacing(1),
@@ -88,27 +93,24 @@ const ActionIconButton = styled(IconButton)(({ theme }) => ({
 }));
 
 export default function Header() {
-  // --- AUTH & NAVIGATION ---
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // --- STATE TÌM KIẾM ---
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  // --- STATE THÔNG BÁO & TIN NHẮN ---
   const [requests, setRequests] = useState<User[]>([]);
   const [showMsgDropdown, setShowMsgDropdown] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const msgRef = useRef<HTMLDivElement>(null);
   const notiRef = useRef<HTMLDivElement>(null);
   const { notifications } = useWebSocket();
+  const [liveUser, setLiveUser] = useState<User | null>(null);
 
-  // --- LOGIC TÌM KIẾM (DEBOUNCE 500MS) ---
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
@@ -132,18 +134,16 @@ export default function Header() {
     return () => clearTimeout(delayDebounce);
   }, [searchQuery]);
 
-  // --- LOGIC REAL-TIME (WEBSOCKET) ---
   useEffect(() => {
     if (notifications.length > 0) {
-        const latest = notifications[0];
-        if (latest.type === 'FRIEND_REQUEST' || latest.type === 'ACCEPT_FRIEND') {
-            fetchRequests();
-        }
-        fetchUnreadCount();
+      const latest = notifications[0];
+      if (latest.type === 'FRIEND_REQUEST' || latest.type === 'ACCEPT_FRIEND') {
+        fetchRequests();
+      }
+      fetchUnreadCount();
     }
   }, [notifications]);
 
-  // --- LOGIC FETCH DỮ LIỆU ĐỊNH KỲ ---
   const fetchUnreadCount = async () => {
     try {
       const res = await axiosClient.get('/messages/recent');
@@ -164,14 +164,16 @@ export default function Header() {
 
   useEffect(() => {
     if (isAuthenticated) {
-        fetchRequests();
-        fetchUnreadCount();
-        const interval = setInterval(fetchUnreadCount, 5000);
-        return () => clearInterval(interval);
+      fetchRequests();
+      fetchUnreadCount();
+      axiosClient.get('/profile')
+        .then(res => setLiveUser(res.data))
+        .catch(console.error);
+      const interval = setInterval(fetchUnreadCount, 5000);
+      return () => clearInterval(interval);
     }
   }, [isAuthenticated]);
 
-  // --- XỬ LÝ ĐÓNG DROPDOWN KHI CLICK NGOÀI ---
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (msgRef.current && !msgRef.current.contains(event.target as Node)) {
@@ -191,23 +193,22 @@ export default function Header() {
   return (
     <AppBar position="sticky" sx={{ backgroundColor: '#FFFFFF', color: '#050505', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', zIndex: 1100 }}>
       <Toolbar sx={{ justifyContent: 'space-between', minHeight: '56px !important' }}>
-        
+
         {/* --- VÙNG TRÁI: LOGO & SEARCH --- */}
         <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, position: 'relative' }} ref={searchRef}>
           <Box onClick={() => navigate('/')} sx={{ cursor: 'pointer', display: 'flex', alignItems: 'center', mr: 1 }}>
             <img src="/logo.png" alt="Logo" style={{ height: '40px', width: '40px' }} />
           </Box>
-          
+
           <Search>
             <SearchIconWrapper><SearchIcon /></SearchIconWrapper>
-            <StyledInputBase 
-              placeholder="Tìm kiếm sinh viên..." 
+            <StyledInputBase
+              placeholder="Tìm kiếm sinh viên..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => searchQuery && setShowSearchDropdown(true)}
             />
 
-            {/* DROPDOWN KẾT QUẢ TÌM KIẾM */}
             {showSearchDropdown && (
               <SearchDropdown>
                 <Box sx={{ p: 1.5, borderBottom: '1px solid #ddd' }}>
@@ -218,30 +219,36 @@ export default function Header() {
                     <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress size={28} /></Box>
                   ) : searchResults.length > 0 ? (
                     searchResults.map((result) => (
-                      <ListItem 
+                      <ListItem
                         key={result.id}
-                        sx={{ 
+                        sx={{
                           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                           gap: 1, '&:hover': { bgcolor: '#F2F2F2' }, py: 1, px: 1.5
                         }}
                       >
-                        <Box 
+                        <Box
                           sx={{ display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer', flex: 1, minWidth: 0 }}
                           onClick={() => { navigate(`/profile/${result.id}`); setShowSearchDropdown(false); }}
                         >
-                          <Avatar src={result.avatarUrl} sx={{ width: 40, height: 40 }} />
+                          {/* 🟢 ĐÃ SỬA: Đã thêm prop "name" cho thanh Tìm kiếm */}
+                          <AvatarWithFrame
+                            src={result.avatarUrl}
+                            name={result.fullName}
+                            frameClass={(result as any).currentAvatarFrame}
+                            size={40}
+                          />
                           <Box sx={{ overflow: 'hidden' }}>
-                            <Typography variant="body2" fontWeight={600} noWrap>{result.fullName}</Typography>
-                            <Typography variant="caption" color="text.secondary" noWrap>{result.studentCode}</Typography>
+                            <Typography variant="body2" fontWeight={600} noWrap>
+                              <ColoredName name={result.fullName} colorClass={(result as any).currentNameColor} />
+                            </Typography>                            <Typography variant="caption" color="text.secondary" noWrap>{result.studentCode}</Typography>
                           </Box>
                         </Box>
 
-                        {/* HIỆN TRẠNG THÁI QUAN HỆ QUA FRIENDBUTTON */}
                         <Box sx={{ width: '115px', flexShrink: 0 }}>
                           {user && result.id !== user.id && (
-                            <FriendButton 
-                              targetUserId={result.id} 
-                              currentUserId={user.id} 
+                            <FriendButton
+                              targetUserId={result.id}
+                              currentUserId={user.id}
                             />
                           )}
                         </Box>
@@ -277,7 +284,6 @@ export default function Header() {
                 </Tooltip>
               )}
 
-              {/* MESSENGER DROPDOWN */}
               <Box sx={{ position: 'relative' }} ref={msgRef}>
                 <Tooltip title="Tin nhắn">
                   <ActionIconButton onClick={() => setShowMsgDropdown(!showMsgDropdown)}>
@@ -291,28 +297,35 @@ export default function Header() {
                 )}
               </Box>
 
-              {/* NOTIFICATIONS BELL */}
               <Box ref={notiRef}>
                 <NotificationBell />
               </Box>
 
-              {/* USER PROFILE BOX */}
-              <Tooltip title={user?.fullName || 'Tài khoản'}>
-                <Box 
+              <Tooltip title={liveUser?.fullName || user?.fullName || 'Tài khoản'}>
+                <Box
                   onClick={() => navigate('/profile')}
-                  sx={{ 
+                  sx={{
                     display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer',
                     ml: 1, p: '4px 8px', borderRadius: '20px', '&:hover': { bgcolor: '#F2F2F2' }
                   }}
                 >
-                  <Avatar sx={{ width: 28, height: 28 }} src={user?.avatarUrl} alt={user?.fullName} />
+                  {/* 🟢 ĐÃ SỬA: Đã thêm prop "name" để đồng bộ chữ LP, xóa ảnh U đi */}
+                  <AvatarWithFrame
+                    src={liveUser?.avatarUrl || user?.avatarUrl}
+                    name={liveUser?.fullName || user?.fullName}
+                    frameClass={(liveUser as any)?.currentAvatarFrame || (user as any)?.currentAvatarFrame}
+                    size={28}
+                  />
                   <Typography variant="body2" sx={{ fontWeight: 600, display: { xs: 'none', lg: 'block' } }}>
-                    {user?.fullName?.split(' ').pop()}
-                  </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600, display: { xs: 'none', lg: 'block' } }}>
+                      <ColoredName
+                        name={(liveUser?.fullName || user?.fullName || '').split(' ').pop()}
+                        colorClass={(liveUser as any)?.currentNameColor || (user as any)?.currentNameColor}
+                      />
+                    </Typography>                  </Typography>
                 </Box>
               </Tooltip>
 
-              {/* LOGOUT BUTTON */}
               <Tooltip title="Đăng xuất">
                 <ActionIconButton onClick={handleLogout}><LogoutIcon /></ActionIconButton>
               </Tooltip>

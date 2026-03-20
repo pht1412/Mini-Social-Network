@@ -112,6 +112,8 @@ public class AuthService {
                 .className(user.getClassName())
                 .role(user.getRole())
                 .active(user.getActive())
+                .currentAvatarFrame(user.getCurrentAvatarFrame())
+                .currentNameColor(user.getCurrentNameColor())
                 .build()
         ).collect(Collectors.toList());
     }

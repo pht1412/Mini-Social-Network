@@ -19,4 +19,7 @@ public class PostDto {
     private Long likeCount;
     private Long commentCount;
     private Long shareCount;
+    // 🟢 BỔ SUNG 2 TRƯỜNG NÀY ĐỂ PHỦ SÓNG MA THUẬT CSS
+    private String authorAvatarFrame;
+    private String authorNameColor;
 }

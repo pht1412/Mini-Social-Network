@@ -6,6 +6,10 @@ import type { User } from '../../types';
 import { useChat } from '../../context/ChatContext';
 import './ChatBox.css';
 
+// 🔴 IMPORT COMPONENT AVATAR MA THUẬT
+import AvatarWithFrame from '../AvatarWithFrame';
+import ColoredName from '../ColoredName'; // (Sửa đường dẫn cho đúng từng file)
+
 interface Message {
   id?: number;
   senderId: number;
@@ -102,12 +106,11 @@ const ChatBox: React.FC<Props> = ({ currentUser }) => {
         className="chat-bubble-container"
         onClick={() => setIsMinimized(false)}
       >
-        <img
-          src={
-            targetUser.avatarUrl ||
-            `https://ui-avatars.com/api/?name=${targetUser.fullName}`
-          }
-          className="chat-bubble-avatar"
+        {/* 🔴 AVATAR KHI THU NHỎ (Bong bóng chat) */}
+        <AvatarWithFrame 
+          src={targetUser.avatarUrl || `https://ui-avatars.com/api/?name=${targetUser.fullName}`}
+          frameClass={(targetUser as any).currentAvatarFrame}
+          size={56} // Vừa khít với .chat-bubble-container
         />
         <div
           className="chat-bubble-close"
@@ -130,18 +133,18 @@ const ChatBox: React.FC<Props> = ({ currentUser }) => {
       <div className="fb-chat-header">
         <div className="fb-chat-user">
           <div style={{ position: 'relative' }}>
-            <img
-              src={
-                targetUser.avatarUrl ||
-                `https://ui-avatars.com/api/?name=${targetUser.fullName}`
-              }
-              className="fb-chat-avatar"
+            {/* 🔴 AVATAR KHI MỞ KHUNG CHAT */}
+            <AvatarWithFrame 
+              src={targetUser.avatarUrl || `https://ui-avatars.com/api/?name=${targetUser.fullName}`}
+              frameClass={(targetUser as any).currentAvatarFrame}
+              size={36} // Vừa khít với .fb-chat-avatar
             />
             <span className="fb-online-dot" />
           </div>
           <div>
-            <div className="fb-chat-name">{targetUser.fullName}</div>
-            <div className="fb-chat-status">Đang hoạt động</div>
+<div className="fb-chat-name">
+    <ColoredName name={targetUser.fullName} colorClass={(targetUser as any).currentNameColor} />
+</div>            <div className="fb-chat-status">Đang hoạt động</div>
           </div>
         </div>
 

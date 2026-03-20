@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { 
   IconButton, Badge, Menu, MenuItem, 
-  Typography, Box, Avatar, Divider, Button, CircularProgress 
+  Typography, Box, Divider, Button, CircularProgress 
 } from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import { useNavigate } from 'react-router-dom';
 import { useWebSocket } from '../../context/WebSocketContext';
 import axiosClient from '../../api/axiosClient';
+
+// 🔴 IMPORT MA THUẬT GIAO DIỆN
+import AvatarWithFrame from '../AvatarWithFrame';
+import ColoredName from '../ColoredName';
 
 export default function NotificationBell() {
   const { notifications, unreadCount, setUnreadCount } = useWebSocket();
@@ -32,8 +36,6 @@ export default function NotificationBell() {
     }
 
     // --- LOGIC QUAN TRỌNG: Kiểm tra lại trạng thái bạn bè của các thông báo đang hiển thị ---
-    // Mục đích: Để khi F5 lại trang, nếu đã là bạn bè rồi thì không hiện nút "Chấp nhận" nữa
-    
     // Lọc ra danh sách ID những người gửi lời mời kết bạn trong list thông báo
     const friendRequestSenders = notifications
         .filter(n => n.type === 'FRIEND_REQUEST')
@@ -48,7 +50,6 @@ export default function NotificationBell() {
         // Gọi API kiểm tra trạng thái song song cho nhanh
         await Promise.all(uniqueSenders.map(async (id) => {
             try {
-                // Gọi API check status (Backend phải có API này)
                 const res = await axiosClient.get(`/friends/status/${id}`);
                 statuses[id] = res.data.status; 
             } catch (e) { 
@@ -78,7 +79,7 @@ export default function NotificationBell() {
 
   // --- 2. XỬ LÝ KHI BẤM NÚT CHẤP NHẬN / TỪ CHỐI ---
   const handleFriendAction = async (e: React.MouseEvent, notif: any, action: 'accept' | 'deny') => {
-    e.stopPropagation(); // Chặn click lan ra ngoài (tránh kích hoạt handleNotificationClick)
+    e.stopPropagation(); // Chặn click lan ra ngoài
     
     // Đánh dấu đang xử lý để hiện loading
     setProcessingIds(prev => new Set(prev).add(notif.id));
@@ -86,11 +87,9 @@ export default function NotificationBell() {
     try {
         if (action === 'accept') {
             await axiosClient.post(`/friends/accept/${notif.senderId}`);
-            // Cập nhật ngay trạng thái local thành ACCEPTED -> Nút sẽ biến mất ngay lập tức
             setFriendStatuses(prev => ({ ...prev, [notif.senderId]: 'ACCEPTED' }));
         } else {
             await axiosClient.delete(`/friends/remove/${notif.senderId}`);
-            // Cập nhật ngay trạng thái local thành DELETED/NONE
             setFriendStatuses(prev => ({ ...prev, [notif.senderId]: 'DELETED' }));
         }
     } catch (error) {
@@ -156,12 +155,9 @@ export default function NotificationBell() {
                 // --- LOGIC QUYẾT ĐỊNH HIỂN THỊ NÚT HAY CHỮ ---
                 const status = friendStatuses[notif.senderId];
                 
-                // Mặc định là hiện nút nếu chưa có status (PENDING)
-                // Ẩn nút nếu đã ACCEPTED, DELETED hoặc đã hủy (NONE)
                 const showButtons = notif.type === 'FRIEND_REQUEST' && 
                                     (status === undefined || status === 'PENDING');
 
-                // Nội dung phản hồi khi đã xử lý
                 let feedbackText = '';
                 if (status === 'ACCEPTED') feedbackText = 'Đã trở thành bạn bè';
                 else if (status === 'DELETED' || status === 'NONE') feedbackText = 'Đã từ chối lời mời';
@@ -178,11 +174,26 @@ export default function NotificationBell() {
                             cursor: notif.type === 'FRIEND_REQUEST' ? 'default' : 'pointer'
                         }} 
                     >
-                    <Avatar src={notif.senderAvatar} alt={notif.senderName} sx={{ width: 48, height: 48 }} />
+                    
+                    {/* 🔴 AVATAR THÔNG BÁO CÓ VIỀN */}
+                    <Box sx={{ flexShrink: 0 }}>
+                        <AvatarWithFrame 
+                            src={notif.senderAvatar} 
+                            name={notif.senderName} 
+                            frameClass={notif.senderAvatarFrame} // Dữ liệu từ Socket Backend
+                            size={48} 
+                        />
+                    </Box>
                     
                     <Box sx={{ flex: 1 }}>
                         <Typography variant="subtitle2" component="div">
-                            <strong>{notif.senderName}</strong> {notif.message}
+                            {/* 🔴 TÊN THÔNG BÁO ĐÃ CÓ MÀU */}
+                            <strong>
+                                <ColoredName 
+                                    name={notif.senderName} 
+                                    colorClass={notif.senderNameColor} // Dữ liệu từ Socket Backend
+                                />
+                            </strong> {notif.message}
                         </Typography>
                         <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
                             {new Date(notif.createdAt).toLocaleString()}

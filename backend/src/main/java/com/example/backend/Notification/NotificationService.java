@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.example.backend.Event.NotificationEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import com.example.backend.User.User;
 
 @Service
 @RequiredArgsConstructor
@@ -24,8 +25,8 @@ public class NotificationService {
     @Async
     public void handleNotificationEvent(NotificationEvent event) {
         try {
-            log.info(">>> [START] Handling event from Sender ID: {} to Receiver ID: {}", 
-                     event.getSender().getId(), event.getReceiver().getId());
+            log.info(">>> [START] Handling event from Sender ID: {} to Receiver ID: {}",
+                    event.getSender().getId(), event.getReceiver().getId());
 
             if (event.getSender().getId().equals(event.getReceiver().getId())) {
                 log.warn(">>> [SKIP] Sender and Receiver are the same person. Skipping.");
@@ -41,36 +42,36 @@ public class NotificationService {
                     .metadata(createMetadataJson(event))
                     .isRead(false)
                     .build();
-            
+
             Notification savedNotification = notificationRepository.save(notification);
             NotificationDTO response = mapToDTO(savedNotification);
-            
+
             String targetPrincipal = event.getReceiver().getStudentCode();
-            
+
             log.info("=================================================");
             log.info(">>> [DEBUG-SOCKET] Preparing to send WebSocket Msg");
-            
+
             if (targetPrincipal == null || targetPrincipal.isEmpty()) {
-                log.error("!!! [CRITICAL ERROR] StudentCode is NULL or EMPTY for Receiver ID: {}", event.getReceiver().getId());
+                log.error("!!! [CRITICAL ERROR] StudentCode is NULL or EMPTY for Receiver ID: {}",
+                        event.getReceiver().getId());
                 log.error("!!! Socket message will NOT be sent because user is undefined.");
-                return; 
+                return;
             }
 
             log.info(">>> Target Principal (User): '{}'", targetPrincipal);
             log.info(">>> Destination: /user/{}/queue/notifications", targetPrincipal);
-            
+
             try {
                 log.info(">>> Payload: {}", objectMapper.writeValueAsString(response));
             } catch (Exception e) {
-                 log.info(">>> Payload (Object): {}", response);
+                log.info(">>> Payload (Object): {}", response);
             }
 
             messagingTemplate.convertAndSendToUser(
                     targetPrincipal,
                     "/queue/notifications",
-                    response
-            );   
-            
+                    response);
+
             log.info(">>> [SUCCESS] convertAndSendToUser executed.");
             log.info("=================================================");
 
@@ -82,12 +83,12 @@ public class NotificationService {
     private String createMetadataJson(NotificationEvent event) {
         try {
             Map<String, Object> metadata = new HashMap<>();
-            
+
             switch (event.getType()) {
                 case COMMENT_POST:
-                    String snippet = event.getMessage().length() > 50 
-                        ? event.getMessage().substring(0, 50) + "..." 
-                        : event.getMessage();
+                    String snippet = event.getMessage().length() > 50
+                            ? event.getMessage().substring(0, 50) + "..."
+                            : event.getMessage();
                     metadata.put("commentSnippet", snippet);
                     break;
                 case FRIEND_REQUEST:
@@ -97,7 +98,7 @@ public class NotificationService {
                     break;
             }
             return objectMapper.writeValueAsString(metadata);
-            
+
         } catch (Exception e) {
             System.out.println("Error creating metadata JSON: " + e.getMessage());
             return "{}";
@@ -107,12 +108,16 @@ public class NotificationService {
     NotificationDTO mapToDTO(Notification notification) {
         String messageContent = buildMessageContent(notification);
         String targetUrl = buildTargetUrl(notification);
+        User sender = notification.getSender();
 
         return NotificationDTO.builder()
                 .id(notification.getId())
                 .senderId(Long.valueOf(notification.getSender().getId()))
                 .senderName(notification.getSender().getFullName())
                 .senderAvatar(notification.getSender().getAvatarUrl())
+                // 🟢 BẮT BUỘC PHẢI GỌI GETTER TỪ SENDER ĐỂ ĐỔ DỮ LIỆU VÀO DTO
+                .senderAvatarFrame(sender.getCurrentAvatarFrame())
+                .senderNameColor(sender.getCurrentNameColor())
                 .message(messageContent)
                 .targetUrl(targetUrl)
                 .createdAt(notification.getCreatedAt())

@@ -62,8 +62,10 @@ public class FriendController {
     }
 
     @GetMapping("/suggested")
-    public ResponseEntity<?> getSuggested() {
-        return ResponseEntity.ok(friendshipService.getSuggestedFriends(getCurrentUserId()));
+    public ResponseEntity<?> getSuggested(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size) { // Mặc định trả về 5 người
+        return ResponseEntity.ok(friendshipService.getSuggestedFriends(getCurrentUserId(), page, size));
     }
 
     @GetMapping("/requests")

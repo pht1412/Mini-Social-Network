@@ -8,6 +8,8 @@ export interface User {
     avatarUrl: string;
     role: string;
     active: boolean;
+    vptl_Points: number;
+    currentAvatarFrame: string | null; // MỚI: Thêm trường này để lưu frame hiện tại của user
     createdAt: string;
     lastLogin: string;
 }

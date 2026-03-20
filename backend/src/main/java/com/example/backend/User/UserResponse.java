@@ -23,4 +23,11 @@ public class UserResponse {
     private Boolean active;
     private LocalDateTime createdAt;
     private LocalDateTime lastLogin;
+
+    // 🟢 MỚI: BỔ SUNG ĐỂ TRẢ VỀ CHO FRONT-END
+    private Integer level;
+    private Integer exp;
+    private Integer vptlPoints;
+    private String currentAvatarFrame;
+    private String currentNameColor;
 }

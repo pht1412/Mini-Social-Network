@@ -49,6 +49,11 @@ public class AuthController {
             response.put("fullName", user.getFullName());
             response.put("role", user.getRole()); // Quan trọng nhất cái này
             response.put("avatarUrl", user.getAvatarUrl());
+            // 🟢 MỚI: TRẢ VỀ ĐIỂM VÀ LEVEL NGAY KHI LOGIN
+            response.put("level", user.getLevel());
+            response.put("exp", user.getExp());
+            response.put("vptlPoints", user.getVptlPoints());
+            response.put("currentAvatarFrame", user.getCurrentAvatarFrame());
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -82,6 +87,11 @@ public class AuthController {
             .bio(user.getBio())
             .className(user.getClassName())
             .role(user.getRole())
+            .level(user.getLevel())
+            .exp(user.getExp())
+            .vptlPoints(user.getVptlPoints())
+            .currentAvatarFrame(user.getCurrentAvatarFrame())
+            .currentNameColor(user.getCurrentNameColor())
             .build();
             
         return ResponseEntity.ok(res);

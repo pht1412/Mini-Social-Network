@@ -48,7 +48,23 @@ public class SecurityConfig {
                     return cfg;
                 }))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/login", "/api/auth/register","/uploads/**", "/ws/**").permitAll()
+                        // 1. Các API công khai (Không cần Token)
+                        .requestMatchers(
+                                "/api/auth/login",
+                                "/api/auth/register",
+                                "/uploads/**",
+                                "/ws/**",
+                                "/api/games/leaderboard/**")
+                        .permitAll()
+
+                        // 2. Các API cần Token để chơi game và mua đồ
+                        .requestMatchers("/api/games/score").authenticated()
+                        .requestMatchers("/api/shop/**").authenticated()
+
+                        // 3. Các API của Admin (Nếu sau này bạn cần chặn Admin)
+                        // .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                        // 4. Mọi yêu cầu còn lại phải đăng nhập
                         .anyRequest().authenticated())
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(daoAuthenticationProvider())

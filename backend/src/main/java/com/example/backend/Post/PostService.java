@@ -228,6 +228,10 @@ public class PostService {
         authorDto.setFullName(author.getFullName());
         authorDto.setAvatarUrl(author.getAvatarUrl());
         authorDto.setStudentCode(author.getStudentCode()); 
+        
+        // 🟢 BỔ SUNG 2 DÒNG NÀY ĐỂ TRUYỀN MA THUẬT XUỐNG FRONTEND
+        authorDto.setCurrentAvatarFrame(author.getCurrentAvatarFrame());
+        authorDto.setCurrentNameColor(author.getCurrentNameColor());
 
         List<PostMedia> mediaList = post.getMedia() == null ? new ArrayList<>() : post.getMedia();
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   Card, CardHeader, CardContent, CardActions,
-  Avatar, IconButton, Typography, Box, Divider, Button, Link,
+  IconButton, Typography, Box, Divider, Button, Link,
   Menu, MenuItem, ListItemIcon,
   Collapse
 } from '@mui/material';
@@ -22,6 +22,10 @@ import EditPost from './EditPost';
 import PostMediaGrid from './PostMediaGrid';
 import CommentSection from '../comment/CommentSection';
 
+// 🔴 IMPORT MA THUẬT GIAO DIỆN (Lưu ý sửa đường dẫn cho khớp thư mục của bạn)
+import AvatarWithFrame from '../AvatarWithFrame'; 
+import ColoredName from '../ColoredName';
+
 // --- Types ---
 export interface PostMedia {
   id: number;
@@ -34,6 +38,9 @@ export interface PostAuthor {
   username: string;
   fullName: string;
   avatarUrl: string;
+  // 🟢 THÊM 2 TRƯỜNG NÀY ĐỂ NHẬN DIỆN MA THUẬT
+  currentAvatarFrame?: string; 
+  currentNameColor?: string;
 }
 
 export interface PostData {
@@ -63,9 +70,8 @@ const formatDate = (dateString: string) => {
   }).format(date);
 };
 
-// ⭐️ COMPONENT CON: HIỂN THỊ NỘI DUNG BÀI GỐC (LỒNG BÊN TRONG)
+// ⭐️ COMPONENT CON: HIỂN THỊ NỘI DUNG BÀI GỐC (BÀI ĐƯỢC SHARE)
 const SharedPostContent = ({ originalPost }: { originalPost: PostData }) => {
-    // Trường hợp bài gốc đã bị xóa
     if (!originalPost) {
       return (
         <Box sx={{ p: 2, bgcolor: '#F0F2F5', border: '1px solid #ddd', borderRadius: 2 }}>
@@ -78,16 +84,26 @@ const SharedPostContent = ({ originalPost }: { originalPost: PostData }) => {
   
     return (
       <Box sx={{ mt: 2, border: '1px solid #ddd', borderRadius: 2, overflow: 'hidden' }}>
-          {/* Header nhỏ của bài gốc */}
           <Box sx={{ p: 1.5, display: 'flex', alignItems: 'center', bgcolor: '#F7F8FA', borderBottom: '1px solid #eee' }}>
-              <Avatar 
-                  src={originalPost.author.avatarUrl} 
-                  sx={{ width: 32, height: 32, mr: 1.5 }} 
-              />
+              
+              {/* 🔴 AVATAR CỦA TÁC GIẢ BÀI GỐC */}
+              <Box sx={{ mr: 1.5 }}>
+                  <AvatarWithFrame 
+                      src={originalPost.author.avatarUrl} 
+                      name={originalPost.author.fullName}
+                      frameClass={originalPost.author.currentAvatarFrame}
+                      size={32} 
+                  />
+              </Box>
+
               <Box>
                   <Link component={RouterLink} to={`/profile/${originalPost.author.id}`} underline="hover" color="text.primary">
                     <Typography variant="subtitle2" fontWeight="bold">
-                        {originalPost.author.fullName}
+                        {/* 🔴 TÊN CÓ MÀU CỦA TÁC GIẢ BÀI GỐC */}
+                        <ColoredName 
+                            name={originalPost.author.fullName} 
+                            colorClass={originalPost.author.currentNameColor} 
+                        />
                     </Typography>
                   </Link>
                   <Link component={RouterLink} to={`/posts/${originalPost.id}`} underline="hover" color="text.secondary">
@@ -98,40 +114,29 @@ const SharedPostContent = ({ originalPost }: { originalPost: PostData }) => {
               </Box>
           </Box>
   
-          {/* Nội dung text bài gốc */}
           <Box sx={{ px: 2, py: 1 }}>
                <Typography variant="body2" style={{ whiteSpace: 'pre-line' }}>{originalPost.content}</Typography>
           </Box>
   
-          {/* Media bài gốc */}
           {originalPost.media && originalPost.media.length > 0 && (
               <PostMediaGrid media={originalPost.media} />
           )}
       </Box>
     );
-  };
+};
 
-// ⭐️ MAIN COMPONENT
+// ⭐️ MAIN COMPONENT: CARD POST CHÍNH
 export default function PostCard({ post: initialPost, onDeleteSuccess }: PostCardProps) {
   
   const [post, setPost] = useState<PostData>(initialPost);
-
-  // MENU & DIALOG STATE
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [showComments, setShowComments] = useState(false);
   
   const isMenuOpen = Boolean(anchorEl);
-  // const isOwner = true; // Logic check owner của em
 
-  // --- HANDLERS ---
-  const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
+  const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => setAnchorEl(event.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
 
   const handleEditClick = () => {
     setIsEditDialogOpen(true);
@@ -169,25 +174,16 @@ export default function PostCard({ post: initialPost, onDeleteSuccess }: PostCar
     handleMenuClose();
   };
 
-  const handleUpdateSuccess = (updatedPost: PostData) => {
-      setPost(updatedPost);
-  };
+  const handleUpdateSuccess = (updatedPost: PostData) => setPost(updatedPost);
+  const handleCommentClick = () => setShowComments(!showComments);
 
-  const handleCommentClick = () => {
-    setShowComments(!showComments);
-  };
-
-  // ⭐️ XỬ LÝ SHARE (ĐƠN GIẢN HÓA ĐỂ CHẠY ĐƯỢC)
   const handleShareClick = async () => {
       const caption = prompt("Nhập nội dung bạn muốn chia sẻ:");
-      if (caption === null) return; // Người dùng bấm Cancel
+      if (caption === null) return;
 
       try {
-          // Gọi API Share (Backend em đã làm ở bước trước)
-          // Endpoint: /api/posts/{postId}/share
           await api.post(`/api/posts/${post.id}/share`, { content: caption });
           alert("Chia sẻ thành công!");
-          // Tăng số lượng share ảo để UI phản hồi
           setPost(prev => ({ ...prev, shareCount: (prev.shareCount || 0) + 1 }));
       } catch (error) {
           console.error("Lỗi share:", error);
@@ -199,11 +195,17 @@ export default function PostCard({ post: initialPost, onDeleteSuccess }: PostCar
     <>
       <Card sx={{ maxWidth: '100%', margin: 'auto', mb: 3, boxShadow: 3, borderRadius: 2 }}>
         
-        {/* HEADER: Luôn hiển thị người đăng bài hiện tại (Tác giả hoặc Người Share) */}
+        {/* HEADER: NGƯỜI ĐĂNG BÀI */}
         <CardHeader
           avatar={
-            <Link component={RouterLink} to={`/profile/${post.author.id}`}>
-              <Avatar src={post.author.avatarUrl} alt={post.author.fullName} />
+            <Link component={RouterLink} to={`/profile/${post.author.id}`} style={{ textDecoration: 'none' }}>
+              {/* 🔴 AVATAR CÓ VIỀN CỦA NGƯỜI ĐĂNG */}
+              <AvatarWithFrame 
+                  src={post.author.avatarUrl} 
+                  name={post.author.fullName}
+                  frameClass={post.author.currentAvatarFrame}
+                  size={42} 
+              />
             </Link>
           }
           action={
@@ -214,12 +216,15 @@ export default function PostCard({ post: initialPost, onDeleteSuccess }: PostCar
           title={
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <Link component={RouterLink} to={`/profile/${post.author.id}`}
-                variant="h6"
-                sx={{ fontWeight: 'bold', textDecoration: 'none', color: 'text.primary', '&:hover': { textDecoration: 'underline' }}}
+                  variant="h6"
+                  sx={{ fontWeight: 'bold', textDecoration: 'none', color: 'text.primary', '&:hover': { textDecoration: 'underline' }}}
                 >
-                {post.author.fullName}
+                    {/* 🔴 TÊN CÓ MÀU CỦA NGƯỜI ĐĂNG */}
+                    <ColoredName 
+                        name={post.author.fullName} 
+                        colorClass={post.author.currentNameColor} 
+                    />
                 </Link>
-                {/* Nếu là bài share thì thêm dòng chữ nhỏ */}
                 {post.originalPost && (
                     <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'normal' }}>
                         đã chia sẻ một bài viết
@@ -240,11 +245,7 @@ export default function PostCard({ post: initialPost, onDeleteSuccess }: PostCar
           }
         />
 
-        <Menu
-          anchorEl={anchorEl}
-          open={isMenuOpen}
-          onClose={handleMenuClose}
-        >
+        <Menu anchorEl={anchorEl} open={isMenuOpen} onClose={handleMenuClose}>
           <MenuItem onClick={handleEditClick}>
             <ListItemIcon><EditIcon fontSize="small" /></ListItemIcon>
             Chỉnh sửa bài viết
@@ -256,20 +257,15 @@ export default function PostCard({ post: initialPost, onDeleteSuccess }: PostCar
         </Menu>
 
         <CardContent sx={{ pt: 0 }}>
-          {/* 1. CONTENT CỦA NGƯỜI ĐĂNG (Caption) */}
           {post.content && (
             <Typography variant="body1" color="text.primary" style={{ whiteSpace: 'pre-line', marginBottom: post.originalPost ? 16 : 0 }}>
                 {post.content}
             </Typography>
           )}
 
-          {/* 2. LOGIC PHÂN CHIA: HIỂN THỊ MEDIA HAY BÀI SHARE */}
           {post.originalPost ? (
-              // 
-              // NẾU LÀ BÀI SHARE -> Render Component con lồng nhau
               <SharedPostContent originalPost={post.originalPost} />
           ) : (
-              // NẾU LÀ BÀI GỐC -> Render Media bình thường
               post.media && post.media.length > 0 && (
                   <Box sx={{ mt: 1 }}>
                     <PostMediaGrid media={post.media} />
@@ -278,7 +274,6 @@ export default function PostCard({ post: initialPost, onDeleteSuccess }: PostCar
           )}
         </CardContent>
 
-        {/* STATS */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 2, py: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
              <ThumbUpIcon sx={{ width: 16, height: 16, color: 'primary.main', mr: 0.5 }} />
@@ -301,7 +296,6 @@ export default function PostCard({ post: initialPost, onDeleteSuccess }: PostCar
 
         <Divider variant="middle" sx={{ my: 0 }} />
 
-        {/* ACTIONS */}
         <CardActions sx={{ justifyContent: 'space-around', p: 1 }}>
           <Button 
             fullWidth 
@@ -325,7 +319,6 @@ export default function PostCard({ post: initialPost, onDeleteSuccess }: PostCar
             Bình luận
           </Button>
           
-          {/* ⭐️ NÚT SHARE */}
           <Button 
             fullWidth 
             onClick={handleShareClick}

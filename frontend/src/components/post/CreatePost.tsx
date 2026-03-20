@@ -11,6 +11,9 @@ import SentimentSatisfiedAltIcon from '@mui/icons-material/SentimentSatisfiedAlt
 import CloseIcon from '@mui/icons-material/Close';
 import api from '../../api/api';
 
+import AvatarWithFrame from '../AvatarWithFrame';
+import ColoredName from '../ColoredName';
+
 // --- Styled Components ---
 const FakeInputButton = styled(Button)(({ theme }) => ({
   flexGrow: 1,
@@ -134,13 +137,22 @@ export default function CreatePost() {
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
           {/* ⭐️ Hiển thị Skeleton nếu chưa load xong user */}
           {user ? (
-             <Avatar src={userAvatar} alt={userName} sx={{ mr: 1.5 }} />
+             <Box sx={{ mr: 1.5 }}>
+                 <AvatarWithFrame 
+                     src={userAvatar} 
+                     name={userName} 
+                     frameClass={(user as any)?.currentAvatarFrame} 
+                     size={40} 
+                 />
+             </Box>
           ) : (
              <Skeleton variant="circular" width={40} height={40} sx={{ mr: 1.5 }} />
           )}
           
           <FakeInputButton fullWidth>
-            {user ? `${userName} ơi, bạn đang nghĩ gì thế?` : 'Đang tải...'}
+            {user ? (
+                <><ColoredName name={userName} colorClass={(user as any)?.currentNameColor} /> ơi, bạn đang nghĩ gì thế?</>
+            ) : 'Đang tải...'}
           </FakeInputButton>
         </Box>
         <Divider />
@@ -173,9 +185,16 @@ export default function CreatePost() {
         
         <DialogContent>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <Avatar src={userAvatar} alt={userName} />
+            <AvatarWithFrame 
+                src={userAvatar} 
+                name={userName} 
+                frameClass={(user as any)?.currentAvatarFrame} 
+                size={40} 
+            />
             <Box sx={{ ml: 1.5 }}>
-              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{userName}</Typography>
+              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                  <ColoredName name={userName} colorClass={(user as any)?.currentNameColor} />
+              </Typography>
               <Typography variant="caption" color="text.secondary">Công khai</Typography>
             </Box>
           </Box>

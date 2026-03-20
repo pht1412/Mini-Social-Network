@@ -1,0 +1,99 @@
+/* =========================================
+   BASE STYLES (Khung cơ bản)
+   ========================================= */
+.avatar-wrapper {
+    position: relative;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+}
+
+.avatar-image {
+    border-radius: 50%;
+    object-fit: cover;
+    z-index: 2; /* Đảm bảo ảnh luôn nổi lên trên cái nền của viền */
+    background-color: #fff;
+}
+
+/* =========================================
+   TIER 1: VIỀN RẮN LỤC CƠ BẢN
+   Tên Class trong DB: css-frame-snake-green
+   ========================================= */
+.css-frame-snake-green {
+    position: absolute;
+    inset: -4px; /* Phình to ra ngoài ảnh 4px */
+    border-radius: 50%;
+    border: 3px dashed #22c55e;
+    animation: spin-slow 10s linear infinite;
+    z-index: 1;
+}
+
+/* =========================================
+   TIER 5: VIỀN NEON TÍM (CYBERPUNK)
+   Tên Class trong DB: css-frame-neon-purple
+   ========================================= */
+.css-frame-neon-purple {
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #a855f7, 0 0 20px #a855f7 inset;
+    border: 2px solid #d8b4fe;
+    animation: pulse-glow 2s ease-in-out infinite alternate;
+    z-index: 1;
+}
+
+/* =========================================
+   TIER 7: VIỀN HOÀNG KIM (LEGENDARY)
+   Tên Class trong DB: css-frame-golden-glow
+   ========================================= */
+.css-frame-golden-glow {
+    position: absolute;
+    inset: -6px; /* Viền xịn nên to hơn bình thường */
+    border-radius: 50%;
+    /* Dùng gradient 7 màu vàng/cam xoay vòng */
+    background: conic-gradient(from 0deg, #fde047, #d97706, #fef08a, #d97706, #fde047);
+    animation: spin-fast 3s linear infinite;
+    z-index: 1;
+    box-shadow: 0 0 15px rgba(251, 191, 36, 0.6);
+}
+
+/* Kỹ thuật "Khoét lỗ" cho Viền Hoàng Kim */
+.css-frame-golden-glow::after {
+    content: '';
+    position: absolute;
+    inset: 4px; /* Khoét phần lõi để lấy chỗ nhét ảnh thật vào */
+    background: #fff; 
+    border-radius: 50%;
+}
+
+/* =========================================
+   ANIMATIONS (Hiệu ứng chuyển động)
+   ========================================= */
+@keyframes spin-slow { 100% { transform: rotate(360deg); } }
+@keyframes spin-fast { 100% { transform: rotate(360deg); } }
+@keyframes pulse-glow {
+    0% { opacity: 0.7; transform: scale(0.98); }
+    100% { opacity: 1; transform: scale(1.05); }
+}
+
+/* Màu tên Tím Neon (Đồng bộ với viền Tier 5) */
+.css-color-neon-purple {
+    color: #a855f7;
+    text-shadow: 0 0 8px rgba(168, 85, 247, 0.6);
+    font-weight: 800 !important;
+}
+
+/* Màu tên Hoàng Kim Lấp Lánh (Tier 7) */
+.css-color-golden {
+    background: linear-gradient(to right, #f59e0b, #fbbf24, #f59e0b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 900 !important;
+    animation: gold-text-shine 2s linear infinite;
+}
+
+@keyframes gold-text-shine {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+}
