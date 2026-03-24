@@ -30,6 +30,7 @@ import com.example.backend.PostMedia.PostMedia;
 import com.example.backend.User.User;
 import com.example.backend.User.UserRepository;
 import com.example.backend.User.UserResponse;
+import com.example.backend.VPTLpoint.VptlService;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +42,7 @@ public class PostService {
     private final UserRepository userRepository;
     private final PostLikeRepository postLikeRepository;
     private final ApplicationEventPublisher evenPublisher;
+    private final VptlService vptlService;
 
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
@@ -87,6 +89,7 @@ public class PostService {
         }
 
         Post savedPost = postRepository.save(post);
+        vptlService.trackSocialActivity(currentUser.getId(), "POST");
         return mapToPostResponse(savedPost);
     }
 
