@@ -11,7 +11,7 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # STAGE 2: Run app
-FROM eclipse-temurin:17-jre-jammy
+FROM public.ecr.aws/amazoncorretto/amazoncorretto:17
 WORKDIR /app
 
 # 🟢 TỐI ƯU 2: Thiết lập múi giờ Việt Nam (Giữ nguyên)
