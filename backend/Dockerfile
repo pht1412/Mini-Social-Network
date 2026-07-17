@@ -18,16 +18,12 @@ WORKDIR /app
 ENV TZ=Asia/Ho_Chi_Minh
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# 🔴 VÁ LỖ HỔNG: Tạo một user và group không có đặc quyền tối cao (springuser)
-RUN groupadd -g 1001 springgroup && \
-    useradd -u 1001 -g springgroup -s /bin/sh -m springuser
-
-# Copy file jar từ stage 1 và GÁN QUYỀN SỞ HỮU cho springuser
-COPY --from=build /app/target/backend-0.0.1-SNAPSHOT.jar app.jar
-RUN chown springuser:springgroup app.jar
+# 🔴 VÁ LỖ HỔNG: Sử dụng một user ID không có đặc quyền tối cao (UID 1001) thay vì tạo bằng lệnh
+# Copy file jar từ stage 1 và GÁN QUYỀN SỞ HỮU cho user ID 1001
+COPY --from=build --chown=1001:1001 /app/target/backend-0.0.1-SNAPSHOT.jar app.jar
 
 # 🔴 BẮT BUỘC: Ra lệnh cho Docker chuyển sang dùng user thường trước khi chạy app
-USER springuser
+USER 1001:1001
 
 EXPOSE 8080
 
